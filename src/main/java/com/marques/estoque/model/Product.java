@@ -1,6 +1,7 @@
 package com.marques.estoque.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -9,6 +10,7 @@ import lombok.Setter;
 @Table(name = "tb_produto")
 @Getter @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class Product {
 
     @Id
@@ -19,8 +21,8 @@ public class Product {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "price", nullable = false)
-    private Double price;
+    @Column(name = "quantity", nullable = false)
+    private Integer qtd;
 
     @ManyToOne
     @JoinColumn(name = "category_id")

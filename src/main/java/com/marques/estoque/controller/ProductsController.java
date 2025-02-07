@@ -24,6 +24,12 @@ public class ProductsController {
     }
 
     @GetMapping
+    @RequestMapping("getNameProducts")
+    public ResponseEntity<ProductDTO> findByName(String name) {
+        return ResponseEntity.ok().body(productService.findByName(name));
+    }
+
+    @GetMapping
     public ResponseEntity<List<ProductDTO>> findAll() {
         return ResponseEntity.ok().body(productService.findAll());
     }

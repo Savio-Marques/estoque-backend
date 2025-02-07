@@ -2,6 +2,7 @@ package com.marques.estoque.controller;
 
 
 import com.marques.estoque.dto.CategoryDTO;
+import com.marques.estoque.dto.ProductDTO;
 import com.marques.estoque.service.CategoryService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,12 @@ public class CategoryController {
     @GetMapping("/{id}")
     public ResponseEntity<CategoryDTO> findById(@PathVariable(name = "id") Long id) {
         return ResponseEntity.ok().body(categoryService.findById(id));
+    }
+
+    @GetMapping
+    @RequestMapping("getNameCategory")
+    public ResponseEntity<CategoryDTO> findByName(String name) {
+        return ResponseEntity.ok().body(categoryService.findByName(name));
     }
 
     @GetMapping

@@ -26,6 +26,12 @@ public class CategoryService {
         return CategoryMapper.INSTANCE.toDTO(returnCategory(id));
     }
 
+    public CategoryDTO findByName(String name) {
+        log.info("Searching category by name");
+
+        return CategoryMapper.INSTANCE.toDTO(returnProductWithName(name));
+    }
+
     public List<CategoryDTO> findAll() {
         log.info("Searching All");
 
@@ -78,6 +84,12 @@ public class CategoryService {
         return categoryRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Category not found with id: " + id));
     }
+
+    private Category returnProductWithName(String name) {
+        return categoryRepository.findByNameIgnoreCase(name)
+                .orElseThrow(() -> new NotFoundException("Category not found with name: "+ name));
+    }
+
 
     private void validateAndCheckCategoryName(String name){
         if (name == null || name.isEmpty()) {

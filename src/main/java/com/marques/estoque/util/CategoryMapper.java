@@ -35,7 +35,7 @@ public interface CategoryMapper {
                     ProductDTO productDTO = new ProductDTO();
                     productDTO.setId(product.getId());
                     productDTO.setName(product.getName());
-                    productDTO.setPrice(product.getPrice());
+                    productDTO.setQtd(product.getQtd());
                     productDTO.setCategoryId(product.getCategories().getId());
                     return productDTO;
                 })

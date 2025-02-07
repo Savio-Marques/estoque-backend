@@ -2,7 +2,6 @@ package com.marques.estoque.service;
 
 import com.marques.estoque.dto.ProductDTO;
 import com.marques.estoque.exception.ArgumentException;
-import com.marques.estoque.exception.DuplicateDataException;
 import com.marques.estoque.exception.NotFoundException;
 import com.marques.estoque.model.Product;
 import com.marques.estoque.repository.ProductRepository;
@@ -12,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -26,7 +26,13 @@ public class ProductService {
 
     public ProductDTO findById(Long id) {
         log.info("Searching product by id");
-        return ProductMapper.INSTANCE.toDTO(returnProduct(id));
+        return ProductMapper.INSTANCE.toDTO(returnProductWithId(id));
+    }
+
+    public ProductDTO findByName(String name) {
+        log.info("Searching product by name");
+
+        return ProductMapper.INSTANCE.toDTO(returnProductWithName(name));
     }
 
     public List<ProductDTO> findAll() {
@@ -43,7 +49,13 @@ public class ProductService {
 
     public ProductDTO save(ProductDTO productDTO) {
         log.info("Saving product in database");
-        validateNameAndPriceProduct(productDTO.getName(), productDTO.getPrice(), productDTO.getCategoryId());
+        validateProduct(productDTO.getName(), productDTO.getQtd() ,productDTO.getCategoryId());
+
+        if (productRepository.existsByName(productDTO.getName())){
+            Product product = returnProductWithName(productDTO.getName());
+            product.setQtd(productDTO.getQtd() + product.getQtd());
+            return ProductMapper.INSTANCE.toDTO(productRepository.save(product));
+        }
 
        Product product = productMapper.toEntity(productDTO);
 
@@ -54,9 +66,9 @@ public class ProductService {
 
     public ProductDTO update(Long id, ProductDTO productDTO) {
         log.info("Updating id: {} in database", id);
-        Product product = returnProduct(id);
+        Product product = returnProductWithId(id);
 
-        validateNameAndPriceProduct(productDTO.getName(), productDTO.getPrice(), productDTO.getCategoryId());
+        validateProduct(productDTO.getName(), productDTO.getQtd() ,productDTO.getCategoryId());
 
         updateProductDTO(product, productDTO);
 
@@ -74,32 +86,32 @@ public class ProductService {
         return "Product " + id + " deleted with successfully";
     }
 
-    private Product returnProduct(Long id) {
+    private Product returnProductWithId(Long id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
+    }
+
+    private Product returnProductWithName(String name) {
+        return productRepository.findByNameIgnoreCase(name)
+                .orElseThrow(() -> new NotFoundException("Product not found with name: "+ name));
     }
 
     private void updateProductDTO(Product product, ProductDTO productDTO) {
         product.setName(productDTO.getName());
         product.setName(productDTO.getName());
-        product.setPrice(productDTO.getPrice());
+        product.setQtd(productDTO.getQtd());
         product.setCategories(categoryService.returnCategory(productDTO.getCategoryId()));
     }
 
-    private void validateNameAndPriceProduct(String name, Double price, Long id) {
+    private void validateProduct(String name, Integer qtd ,Long id) {
         if (name == null || name.isEmpty()) {
             log.error("Product name cannot be null our empty");
             throw new ArgumentException("Product name cannot be null our empty");
         }
 
-        if (productRepository.existsByName(name)) {
-            log.error("Product already exists");
-            throw new DuplicateDataException("Product " + name + " already exists");
-        }
-
-        if (price == null || price < 0) {
-            log.error("Product price cannot be null our negative");
-            throw new ArgumentException("Product price cannot be null our negative");
+        if (qtd == null) {
+            log.error("Product quantity cannot be null our empty");
+            throw new ArgumentException("Product quantity cannot be null our empty");
         }
 
         if (id == null) {
