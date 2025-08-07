@@ -3,6 +3,7 @@ package com.marques.estoque.controller;
 
 import com.marques.estoque.dto.ProductDTO;
 import com.marques.estoque.service.ProductService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +25,7 @@ public class ProductsController {
     }
 
     @GetMapping
-    @RequestMapping("getNameProducts")
+    @RequestMapping("/pesquisar")
     public ResponseEntity<ProductDTO> findByName(String name) {
         return ResponseEntity.ok().body(productService.findByName(name));
     }
@@ -35,7 +36,7 @@ public class ProductsController {
     }
 
     @PostMapping
-    public ResponseEntity<ProductDTO> save(@RequestBody ProductDTO productDTO, UriComponentsBuilder uriComponentsBuilder) {
+    public ResponseEntity<ProductDTO> save(@Valid @RequestBody ProductDTO productDTO, UriComponentsBuilder uriComponentsBuilder) {
         ProductDTO product = productService.save(productDTO);
 
         URI uri = uriComponentsBuilder.path("/product/{id}").buildAndExpand(product.getId()).toUri();
@@ -44,8 +45,13 @@ public class ProductsController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProductDTO> update(@RequestBody ProductDTO productDTO, @PathVariable(name = "id") Long id){
+    public ResponseEntity<ProductDTO> update(@Valid @RequestBody ProductDTO productDTO, @PathVariable(name = "id") Long id){
         return ResponseEntity.ok().body(productService.update(id, productDTO));
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<ProductDTO> updatePatch(@Valid @RequestBody ProductDTO patchDTO, @PathVariable(name = "id") Long id){
+        return ResponseEntity.ok().body(productService.updatePatch(id, patchDTO));
     }
 
     @DeleteMapping("/{id}")

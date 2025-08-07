@@ -1,6 +1,7 @@
 package com.marques.estoque.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,6 +22,7 @@ public class Category {
     private Long id;
 
     @Column(name = "name")
+    @NotBlank(message = "O nome da categoria não pode ser vazio.")
     private String name;
 
     @OneToMany(mappedBy = "categories")

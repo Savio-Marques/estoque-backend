@@ -2,7 +2,6 @@ package com.marques.estoque.controller;
 
 
 import com.marques.estoque.dto.CategoryDTO;
-import com.marques.estoque.dto.ProductDTO;
 import com.marques.estoque.service.CategoryService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +24,7 @@ public class CategoryController {
     }
 
     @GetMapping
-    @RequestMapping("getNameCategory")
+    @RequestMapping("/pesquisar")
     public ResponseEntity<CategoryDTO> findByName(String name) {
         return ResponseEntity.ok().body(categoryService.findByName(name));
     }

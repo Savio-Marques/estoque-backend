@@ -22,31 +22,31 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
 
     public CategoryDTO findById(Long id) {
-        log.info("Searching by id");
+        log.info("Procurado por ID");
         return CategoryMapper.INSTANCE.toDTO(returnCategory(id));
     }
 
     public CategoryDTO findByName(String name) {
-        log.info("Searching category by name");
+        log.info("Procurando por nome");
 
         return CategoryMapper.INSTANCE.toDTO(returnProductWithName(name));
     }
 
     public List<CategoryDTO> findAll() {
-        log.info("Searching All");
+        log.info("Buscando todos");
 
         List<Category> categories = categoryRepository.findAll();
 
         if (categories.isEmpty()) {
-            log.error("No categories found in database");
-            throw new NotFoundException("No categories found in database");
+            log.error("Nenhuma categoria encontrada");
+            throw new NotFoundException("Nenhuma categoria encontrada");
         }
 
         return CategoryMapper.INSTANCE.toDTOList(categories);
     }
 
     public CategoryDTO save(CategoryDTO categoryDTO) {
-        log.info("Saving category in database");
+        log.info("Cadastrando categoria");
 
         validateAndCheckCategoryName(categoryDTO.getName());
 
@@ -54,7 +54,7 @@ public class CategoryService {
     }
 
     public CategoryDTO update (Long id, CategoryDTO categoryDTO) {
-        log.info("Updating id: {} category in database", id);
+        log.info("Atualizando a categoria: {}", id);
         Category category = returnCategory(id);
 
         validateAndCheckCategoryName(categoryDTO.getName());
@@ -64,42 +64,47 @@ public class CategoryService {
     }
 
     public String delete(Long id) {
-        log.info("Deleting id: {} category in database", id);
+        log.info("Deletando a categoria: {}", id);
         if (!categoryRepository.existsById(id)) {
-            log.error("Category not found with id: {}", id);
-            throw new NotFoundException("Category not found with id: " + id);
+            log.error("Categoria {} não encontrada", id);
+            throw new NotFoundException("Categoria " + id + " não encontrada");
         }
 
         if (!findById(id).getProducts().isEmpty()) {
-            log.error("Category with one our more registred products");
-            throw new GeneralException("Category with one our more registred products");
+            log.error("Categoria com um ou mais produtos registados");
+            throw new GeneralException("Não é possível excluir categorias com um ou mais produtos registados");
         }
 
         categoryRepository.deleteById(id);
-        return "Category "  + id + " deleted with successfully";
+        return "Categoria "  + id + " excluida com sucesso";
     }
 
-    public Category returnCategory(Long id) {
+    /*
 
+    -------------FUNÇÕES AUXILIARES-------------
+
+    */
+
+    public Category returnCategory(Long id) {
         return categoryRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Category not found with id: " + id));
+                .orElseThrow(() -> new NotFoundException("Categoria com de id" + id + " não encontrada"));
     }
 
     private Category returnProductWithName(String name) {
         return categoryRepository.findByNameIgnoreCase(name)
-                .orElseThrow(() -> new NotFoundException("Category not found with name: "+ name));
+                .orElseThrow(() -> new NotFoundException("Categoria "+ name + " não encontrada"));
     }
 
 
     private void validateAndCheckCategoryName(String name){
         if (name == null || name.isEmpty()) {
-            log.error("Category name cannot be a null our empty");
-            throw new ArgumentException("Category name cannot be a null our empty");
+            log.error("Nome da categoria não pode ser vazio");
+            throw new ArgumentException("Nome da categoria não pode ser vazio");
         }
 
         if (categoryRepository.existsByName(name)) {
-            log.error("Category already exists");
-            throw new DuplicateDataException("Category " + name + " already exists");
+            log.error("Categoria já existente");
+            throw new DuplicateDataException("Categoria " + name + " já existente");
         }
     }
 }
