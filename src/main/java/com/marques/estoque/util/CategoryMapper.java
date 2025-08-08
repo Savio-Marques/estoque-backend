@@ -2,8 +2,8 @@ package com.marques.estoque.util;
 
 import com.marques.estoque.dto.CategoryDTO;
 import com.marques.estoque.dto.ProductDTO;
-import com.marques.estoque.model.Category;
-import com.marques.estoque.model.Product;
+import com.marques.estoque.model.product.Category;
+import com.marques.estoque.model.product.Product;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;

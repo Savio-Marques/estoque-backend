@@ -3,7 +3,7 @@ package com.marques.estoque.service;
 import com.marques.estoque.dto.ProductDTO;
 import com.marques.estoque.exception.ArgumentException;
 import com.marques.estoque.exception.NotFoundException;
-import com.marques.estoque.model.Product;
+import com.marques.estoque.model.product.Product;
 import com.marques.estoque.repository.ProductRepository;
 import com.marques.estoque.util.ProductMapper;
 import lombok.AllArgsConstructor;

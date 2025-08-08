@@ -4,6 +4,7 @@ package com.marques.estoque.controller;
 import com.marques.estoque.dto.CategoryDTO;
 import com.marques.estoque.service.CategoryService;
 import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -16,6 +17,7 @@ import java.util.List;
 @AllArgsConstructor
 public class CategoryController {
 
+    @Autowired
     private final CategoryService categoryService;
 
     @GetMapping("/{id}")

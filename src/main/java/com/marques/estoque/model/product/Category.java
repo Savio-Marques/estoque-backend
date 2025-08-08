@@ -1,4 +1,4 @@
-package com.marques.estoque.model;
+package com.marques.estoque.model.product;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;

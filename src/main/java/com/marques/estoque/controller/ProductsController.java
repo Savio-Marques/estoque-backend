@@ -5,6 +5,7 @@ import com.marques.estoque.dto.ProductDTO;
 import com.marques.estoque.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -17,6 +18,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ProductsController {
 
+    @Autowired
     private final ProductService productService;
 
     @GetMapping("/{id}")

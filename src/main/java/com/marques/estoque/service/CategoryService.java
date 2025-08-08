@@ -5,7 +5,7 @@ import com.marques.estoque.exception.ArgumentException;
 import com.marques.estoque.exception.DuplicateDataException;
 import com.marques.estoque.exception.GeneralException;
 import com.marques.estoque.exception.NotFoundException;
-import com.marques.estoque.model.Category;
+import com.marques.estoque.model.product.Category;
 import com.marques.estoque.repository.CategoryRepository;
 import com.marques.estoque.util.CategoryMapper;
 import lombok.AllArgsConstructor;
