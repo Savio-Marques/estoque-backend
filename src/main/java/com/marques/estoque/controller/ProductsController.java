@@ -3,6 +3,12 @@ package com.marques.estoque.controller;
 
 import com.marques.estoque.dto.ProductDTO;
 import com.marques.estoque.service.ProductService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +26,7 @@ public class ProductsController {
 
     @Autowired
     private final ProductService productService;
+
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductDTO> findById(@PathVariable(name = "id") Long id) {

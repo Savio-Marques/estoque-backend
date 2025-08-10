@@ -42,7 +42,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(DuplicateDataException.class)
     private ResponseEntity<StandardError> duplicatedDataHandler (DuplicateDataException exception) {
         String message = exception.getMessage();
-        HttpStatus status = HttpStatus.UNPROCESSABLE_ENTITY;
+        HttpStatus status = HttpStatus.CONFLICT;
         StandardError err = new StandardError(status, message, Instant.now());
         return ResponseEntity.status(status).body(err);
     }

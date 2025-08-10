@@ -3,6 +3,7 @@ package com.marques.estoque.controller;
 
 import com.marques.estoque.dto.CategoryDTO;
 import com.marques.estoque.service.CategoryService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -37,7 +38,7 @@ public class CategoryController {
     }
 
     @PostMapping
-    public ResponseEntity<CategoryDTO> save(@RequestBody CategoryDTO categoryDTO, UriComponentsBuilder uriComponentsBuilder) {
+    public ResponseEntity<CategoryDTO> save(@RequestBody @Valid CategoryDTO categoryDTO, UriComponentsBuilder uriComponentsBuilder) {
         CategoryDTO category = categoryService.save(categoryDTO);
 
         URI uri = uriComponentsBuilder.path("/category/{id}").buildAndExpand(category.getId()).toUri();
@@ -46,7 +47,7 @@ public class CategoryController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CategoryDTO> update(@RequestBody CategoryDTO categoryDTO, @PathVariable(name = "id") Long id){
+    public ResponseEntity<CategoryDTO> update(@RequestBody @Valid CategoryDTO categoryDTO, @PathVariable(name = "id") Long id){
         return ResponseEntity.ok().body(categoryService.update(id, categoryDTO));
     }
 

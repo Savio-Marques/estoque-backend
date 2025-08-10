@@ -78,7 +78,7 @@ public class CategoryService {
 
         if (!findById(id).getProducts().isEmpty()) {
             log.error("Categoria com um ou mais produtos registados");
-            throw new GeneralException("Não é possível excluir categorias com um ou mais produtos registados");
+            throw new GeneralException("Não é possível excluir categorias com um ou mais produtos registados, Por favor exclua primeiro os produtos.");
         }
 
         categoryRepository.deleteById(id);

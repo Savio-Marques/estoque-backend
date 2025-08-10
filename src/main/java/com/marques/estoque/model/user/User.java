@@ -2,6 +2,7 @@ package com.marques.estoque.model.user;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -37,6 +38,7 @@ public class User implements UserDetails {
     private String password;
 
     @Column(name = "role", nullable = false)
+    @NotNull(message = "A role (função) não pode ser nula.")
     private UserRole role;
 
     public User(String name, String username, String password, UserRole role) {

@@ -2,6 +2,7 @@ package com.marques.estoque.controller;
 
 import com.marques.estoque.dto.LoginResponseDTO;
 import com.marques.estoque.dto.UserCreateDTO;
+import com.marques.estoque.exception.DuplicateDataException;
 import com.marques.estoque.model.user.User;
 import com.marques.estoque.repository.UserRepository;
 import com.marques.estoque.security.TokenService;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,6 +31,9 @@ public class AuthenticationController {
     @Autowired
     private TokenService tokenService;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @PostMapping("/login")
     public ResponseEntity login(@RequestBody @Valid UserCreateDTO userCreateDTO) {
         var userNamePassword = new UsernamePasswordAuthenticationToken(userCreateDTO.getUsername(), userCreateDTO.getPassword());
@@ -40,10 +45,10 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity register(@RequestBody @Valid UserCreateDTO userCreateDTO) {
-        if(this.userRepository.findByUsername(userCreateDTO.getUsername()) != null) throw new RuntimeException("Username já cadastrado.");
+    public ResponseEntity<Void> register(@RequestBody @Valid UserCreateDTO userCreateDTO) {
+        if(this.userRepository.findByUsername(userCreateDTO.getUsername()) != null) throw new DuplicateDataException("Nome de usuário já cadastrado.");
 
-        String encryptedPassword = new BCryptPasswordEncoder().encode(userCreateDTO.getPassword());
+        String encryptedPassword = passwordEncoder.encode(userCreateDTO.getPassword());
         User newUser = new User(userCreateDTO.getName() ,userCreateDTO.getUsername(), encryptedPassword, userCreateDTO.getRole());
 
         this.userRepository.save(newUser);
