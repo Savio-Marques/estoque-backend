@@ -4,10 +4,12 @@ import com.marques.estoque.dto.ProductDTO;
 import com.marques.estoque.exception.ArgumentException;
 import com.marques.estoque.exception.NotFoundException;
 import com.marques.estoque.model.product.Product;
+import com.marques.estoque.model.user.User;
 import com.marques.estoque.repository.ProductRepository;
 import com.marques.estoque.util.ProductMapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,21 +26,21 @@ public class ProductService {
 
 
     public ProductDTO findById(Long id) {
-        log.info("Buscando produto por id");
-        return ProductMapper.INSTANCE.toDTO(returnProductWithId(id));
+        log.info("Buscando produto por id para o usuário logado");
+        return ProductMapper.INSTANCE.toDTO(returnProductWithId(id, getCurrentUser()));
     }
 
     public ProductDTO findByName(String name) {
-        log.info("Buscando produto por nome");
-        return ProductMapper.INSTANCE.toDTO(returnProductWithName(name));
+        log.info("Buscando produto por nome para o usuário logado");
+        return ProductMapper.INSTANCE.toDTO(returnProductWithName(name, getCurrentUser()));
     }
 
     public List<ProductDTO> findAll() {
-        log.info("Buscando todos os produtos");
-        List<Product> listProduct = productRepository.findAll();
+        log.info("Buscando todos os produtos para o usuário logado");
+        List<Product> listProduct = productRepository.findAllByUser(getCurrentUser());
 
         if(listProduct.isEmpty()) {
-            log.error("Nenhum produto encontrado");
+            log.warn("Nenhum produto encontrado");
             throw new NotFoundException("Nenhum produto encontrado");
         }
 
@@ -46,11 +48,12 @@ public class ProductService {
     }
 
     public ProductDTO save(ProductDTO productDTO) {
-        log.info("Salvando produto no banco de dados");
+        log.info("Salvando produto no banco de dados para o usuário logado");
+
         validateProduct(productDTO.getName(), productDTO.getQtd() ,productDTO.getCategoryId());
 
-        if (productRepository.existsByName(productDTO.getName())){
-            Product product = returnProductWithName(productDTO.getName());
+        if (productRepository.existsByNameAndUser(productDTO.getName(), getCurrentUser())){
+            Product product = returnProductWithName(productDTO.getName(), getCurrentUser());
 
             product.setQtd(productDTO.getQtd() + product.getQtd());
 
@@ -59,14 +62,15 @@ public class ProductService {
 
         Product product = productMapper.toEntity(productDTO);
 
-        product.setCategories(categoryService.returnCategory(productDTO.getCategoryId()));
+        product.setCategories(categoryService.returnCategory(productDTO.getCategoryId(), getCurrentUser()));
+        product.setUser(getCurrentUser());
 
         return ProductMapper.INSTANCE.toDTO(productRepository.save(product));
     }
 
     public ProductDTO update(Long id, ProductDTO productDTO) {
         log.info("Atualizando id: {} no banco de dados", id);
-        Product product = returnProductWithId(id);
+        Product product = returnProductWithId(id, getCurrentUser());
 
         validateProduct(productDTO.getName(), productDTO.getQtd() ,productDTO.getCategoryId());
 
@@ -78,7 +82,7 @@ public class ProductService {
     public ProductDTO updatePatch(Long id, ProductDTO productDTO) {
         log.info("Atualizando id: {} no banco de dados", id);
 
-        Product product = returnProductWithId(id);
+        Product product = returnProductWithId(id, getCurrentUser());
 
         if (productDTO.getName() != null) {
             product.setName(productDTO.getName());
@@ -87,7 +91,7 @@ public class ProductService {
             product.setQtd(productDTO.getQtd());
         }
         if (productDTO.getCategoryId() != null) {
-            product.setCategories(categoryService.returnCategory(productDTO.getCategoryId()));
+            product.setCategories(categoryService.returnCategory(productDTO.getCategoryId(), getCurrentUser()));
         }
 
         return ProductMapper.INSTANCE.toDTO(productRepository.save(product));
@@ -95,7 +99,7 @@ public class ProductService {
 
     public String delete(Long id) {
         log.info("Deletando id: {} do banco de dados", id);
-        if (!productRepository.existsById(id)){
+        if (!productRepository.existsByIdAndUser(id, getCurrentUser())){
             log.error("Produto não encontrado com o id: {}",id);
             throw new NotFoundException("Produto com o id " + id + " não encontrado");
         }
@@ -110,20 +114,24 @@ public class ProductService {
 
     */
 
-    private Product returnProductWithId(Long id) {
-        return productRepository.findById(id)
+    private User getCurrentUser() {
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
+    private Product returnProductWithId(Long id, User user) {
+        return productRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new NotFoundException("Produto com o id: " + id + " não encontrado"));
     }
 
-    private Product returnProductWithName(String name) {
-        return productRepository.findByNameIgnoreCase(name)
+    private Product returnProductWithName(String name, User user) {
+        return productRepository.findByNameIgnoreCaseAndUser(name, user)
                 .orElseThrow(() -> new NotFoundException("Produto com o nome: "+ name + " não encontrado"));
     }
 
     private void updateProductDTO(Product product, ProductDTO productDTO) {
         product.setName(productDTO.getName());
         product.setQtd(productDTO.getQtd());
-        product.setCategories(categoryService.returnCategory(productDTO.getCategoryId()));
+        product.setCategories(categoryService.returnCategory(productDTO.getCategoryId(), getCurrentUser()));
     }
 
     private void validateProduct(String name, Integer qtd ,Long id) {

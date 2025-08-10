@@ -1,5 +1,6 @@
 package com.marques.estoque.service;
 
+import com.marques.estoque.exception.NotFoundException;
 import com.marques.estoque.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,6 +16,11 @@ public class AuthorizationService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByEmail(username);
+
+        UserDetails user= userRepository.findByUsername(username);
+
+        if (user == null) throw new NotFoundException("Nome de usuário não encotrado.");
+
+        return user;
     }
 }

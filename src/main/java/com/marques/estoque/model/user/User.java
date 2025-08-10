@@ -28,9 +28,9 @@ public class User implements UserDetails {
     @NotBlank(message = "O nome do usuário não pode ser vazio.")
     private String name;
 
-    @Column(name = "email", nullable = false, unique = true)
-    @NotBlank(message = "O email do usuário não pode ser vazio.")
-    private String email;
+    @Column(name = "username", nullable = false, unique = true)
+    @NotBlank(message = "O username do usuário não pode ser vazio.")
+    private String username;
 
     @Column(name = "password", nullable = false)
     @NotBlank(message = "A senha do usuário não pode ser vazia.")
@@ -39,9 +39,9 @@ public class User implements UserDetails {
     @Column(name = "role", nullable = false)
     private UserRole role;
 
-    public User(String name, String email, String password, UserRole role) {
+    public User(String name, String username, String password, UserRole role) {
         this.name = name;
-        this.email = email;
+        this.username = username;
         this.password = password;
         this.role = role;
     }
@@ -54,7 +54,7 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
-        return email;
+        return username;
     }
 
     @Override

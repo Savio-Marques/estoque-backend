@@ -1,5 +1,6 @@
 package com.marques.estoque.model.product;
 
+import com.marques.estoque.model.user.User;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -21,6 +22,10 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, unique = true)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY) // Muitos produtos para Um usuário. LAZY é melhor para performance.
+    @JoinColumn(name = "user_id", nullable = false) // Nome da coluna de chave estrangeira no banco.
+    private User user;
 
     @Column(name = "name", nullable = false)
     @NotBlank(message = "O nome do produto não pode ser vazio.")

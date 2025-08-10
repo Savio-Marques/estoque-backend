@@ -6,10 +6,12 @@ import com.marques.estoque.exception.DuplicateDataException;
 import com.marques.estoque.exception.GeneralException;
 import com.marques.estoque.exception.NotFoundException;
 import com.marques.estoque.model.product.Category;
+import com.marques.estoque.model.user.User;
 import com.marques.estoque.repository.CategoryRepository;
 import com.marques.estoque.util.CategoryMapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,19 +25,19 @@ public class CategoryService {
 
     public CategoryDTO findById(Long id) {
         log.info("Procurado por ID");
-        return CategoryMapper.INSTANCE.toDTO(returnCategory(id));
+        return CategoryMapper.INSTANCE.toDTO(returnCategory(id, getCurrentUser()));
     }
 
     public CategoryDTO findByName(String name) {
         log.info("Procurando por nome");
 
-        return CategoryMapper.INSTANCE.toDTO(returnProductWithName(name));
+        return CategoryMapper.INSTANCE.toDTO(returnProductWithName(name, getCurrentUser()));
     }
 
     public List<CategoryDTO> findAll() {
         log.info("Buscando todos");
 
-        List<Category> categories = categoryRepository.findAll();
+        List<Category> categories = categoryRepository.findAllByUser(getCurrentUser());
 
         if (categories.isEmpty()) {
             log.error("Nenhuma categoria encontrada");
@@ -50,12 +52,16 @@ public class CategoryService {
 
         validateAndCheckCategoryName(categoryDTO.getName());
 
-        return CategoryMapper.INSTANCE.toDTO(categoryRepository.save(CategoryMapper.INSTANCE.toEntity(categoryDTO)));
+        Category category = CategoryMapper.INSTANCE.toEntity(categoryDTO);
+
+        category.setUser(getCurrentUser());
+
+        return CategoryMapper.INSTANCE.toDTO(categoryRepository.save(category));
     }
 
     public CategoryDTO update (Long id, CategoryDTO categoryDTO) {
         log.info("Atualizando a categoria: {}", id);
-        Category category = returnCategory(id);
+        Category category = returnCategory(id, getCurrentUser());
 
         validateAndCheckCategoryName(categoryDTO.getName());
 
@@ -65,7 +71,7 @@ public class CategoryService {
 
     public String delete(Long id) {
         log.info("Deletando a categoria: {}", id);
-        if (!categoryRepository.existsById(id)) {
+        if (!categoryRepository.existsByIdAndUser(id, getCurrentUser())) {
             log.error("Categoria {} não encontrada", id);
             throw new NotFoundException("Categoria " + id + " não encontrada");
         }
@@ -85,13 +91,17 @@ public class CategoryService {
 
     */
 
-    public Category returnCategory(Long id) {
-        return categoryRepository.findById(id)
+    private User getCurrentUser() {
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
+    public Category returnCategory(Long id, User user) {
+        return categoryRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new NotFoundException("Categoria com de id" + id + " não encontrada"));
     }
 
-    private Category returnProductWithName(String name) {
-        return categoryRepository.findByNameIgnoreCase(name)
+    private Category returnProductWithName(String name, User user) {
+        return categoryRepository.findByNameIgnoreCaseAndUser(name, user)
                 .orElseThrow(() -> new NotFoundException("Categoria "+ name + " não encontrada"));
     }
 
@@ -102,7 +112,7 @@ public class CategoryService {
             throw new ArgumentException("Nome da categoria não pode ser vazio");
         }
 
-        if (categoryRepository.existsByName(name)) {
+        if (categoryRepository.existsByNameAndUser(name, getCurrentUser())) {
             log.error("Categoria já existente");
             throw new DuplicateDataException("Categoria " + name + " já existente");
         }

@@ -1,5 +1,6 @@
 package com.marques.estoque.model.product;
 
+import com.marques.estoque.model.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -20,6 +21,10 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, unique = true)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY) // Muitos produtos para Um usuário. LAZY é melhor para performance.
+    @JoinColumn(name = "user_id", nullable = false) // Nome da coluna de chave estrangeira no banco.
+    private User user;
 
     @Column(name = "name")
     @NotBlank(message = "O nome da categoria não pode ser vazio.")

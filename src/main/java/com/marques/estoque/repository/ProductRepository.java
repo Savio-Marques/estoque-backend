@@ -1,13 +1,29 @@
 package com.marques.estoque.repository;
 
 import com.marques.estoque.model.product.Product;
+import com.marques.estoque.model.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
-    boolean existsByName(String name);
-    Optional<Product> findByNameIgnoreCase(String name);
+
+    // Busca todos os produtos que pertencem a um usuário específico
+    List<Product> findAllByUser(User user);
+
+    // Busca um produto pelo ID, mas SOMENTE se ele pertencer ao usuário fornecido
+    Optional<Product> findByIdAndUser(Long id, User user);
+
+    // Busca um produto pelo nome (ignorando maiúsculas/minúsculas), mas SOMENTE se ele pertencer ao usuário
+    Optional<Product> findByNameIgnoreCaseAndUser(String name, User user);
+
+    // Verifica se um produto existe pelo nome para um usuário específico
+    boolean existsByNameAndUser(String name, User user);
+
+    // Verifica se um produto existe pelo ID para um usuário específico
+    boolean existsByIdAndUser(Long id, User user);
+
 }

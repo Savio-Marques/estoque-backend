@@ -31,7 +31,7 @@ public class AuthenticationController {
 
     @PostMapping("/login")
     public ResponseEntity login(@RequestBody @Valid UserCreateDTO userCreateDTO) {
-        var userNamePassword = new UsernamePasswordAuthenticationToken(userCreateDTO.getEmail(), userCreateDTO.getPassword());
+        var userNamePassword = new UsernamePasswordAuthenticationToken(userCreateDTO.getUsername(), userCreateDTO.getPassword());
         var auth = this.authenticationManager.authenticate(userNamePassword);
 
         var token = tokenService.generateToken((User) auth.getPrincipal());
@@ -41,10 +41,10 @@ public class AuthenticationController {
 
     @PostMapping("/register")
     public ResponseEntity register(@RequestBody @Valid UserCreateDTO userCreateDTO) {
-        if(this.userRepository.findByEmail(userCreateDTO.getEmail()) != null) return ResponseEntity.badRequest().build();
+        if(this.userRepository.findByUsername(userCreateDTO.getUsername()) != null) throw new RuntimeException("Username já cadastrado.");
 
         String encryptedPassword = new BCryptPasswordEncoder().encode(userCreateDTO.getPassword());
-        User newUser = new User(userCreateDTO.getName() ,userCreateDTO.getEmail(), encryptedPassword, userCreateDTO.getRole());
+        User newUser = new User(userCreateDTO.getName() ,userCreateDTO.getUsername(), encryptedPassword, userCreateDTO.getRole());
 
         this.userRepository.save(newUser);
 

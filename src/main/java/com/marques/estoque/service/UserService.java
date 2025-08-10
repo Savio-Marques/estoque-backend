@@ -7,7 +7,6 @@ import com.marques.estoque.model.user.User;
 import com.marques.estoque.repository.UserRepository;
 import com.marques.estoque.util.UserMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.annotations.Array;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,7 +24,7 @@ public class UserService {
         List<User> userList = userRepository.findAll();
 
         if(userList.isEmpty()) {
-            log.error("Nenhum usuário encontrado");
+            log.warn("Nenhum usuário encontrado");
             throw new NotFoundException("Nenhum usuário encontrado");
         }
 
@@ -37,7 +36,7 @@ public class UserService {
                 .orElseThrow(() -> new NotFoundException("Usuário com o id: " + id + " não encontrado"));
 
         user.setName(userCreateDTO.getName());
-        user.setEmail(userCreateDTO.getEmail());
+        user.setUsername(userCreateDTO.getUsername());
 
         if(userCreateDTO.getPassword() != null && !userCreateDTO.getPassword().trim().isEmpty()) {
             String encryptedPassword = new BCryptPasswordEncoder().encode(userCreateDTO.getPassword());
