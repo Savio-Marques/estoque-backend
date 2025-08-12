@@ -22,7 +22,7 @@ import java.util.List;
 @RequestMapping("/product")
 @AllArgsConstructor
 @Tag(name = "Produtos", description = "Operações para gerenciar produtos e estoque")
-public class ProductsController {
+public class ProductController {
 
     @Autowired
     private final ProductService productService;

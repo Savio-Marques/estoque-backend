@@ -7,22 +7,28 @@ import com.marques.estoque.model.product.Product;
 import com.marques.estoque.model.user.User;
 import com.marques.estoque.repository.ProductRepository;
 import com.marques.estoque.util.ProductMapper;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-@AllArgsConstructor
 @Slf4j
 public class ProductService {
 
-    private final ProductRepository productRepository;
-    private final CategoryService categoryService;
+    @Autowired
+    private ProductRepository productRepository;
 
-    private final ProductMapper productMapper;
+    @Autowired
+    private CategoryService categoryService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private ProductMapper productMapper;
 
 
     public ProductDTO findById(Long id) {
@@ -142,12 +148,12 @@ public class ProductService {
 
         if (qtd == null) {
             log.error("A quantidade do produto não pode ser nula");
-            throw new ArgumentException("A quantidade do produto não pode ser nulo(a)");
+            throw new ArgumentException("A quantidade do produto não pode ser nulo");
         }
 
         if (id == null) {
             log.error("O Id da categoria não pode ser nulo");
-            throw new ArgumentException("O Id da categoria não pode ser nulo(a)");
+            throw new ArgumentException("O Id da categoria não pode ser nulo");
         }
     }
 

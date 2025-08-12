@@ -12,8 +12,6 @@ public class DebtorDTO {
 
     private Long id;
 
-    private User user;
-
     private String name;
 
     private String description;

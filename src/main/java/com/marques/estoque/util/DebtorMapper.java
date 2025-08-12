@@ -14,7 +14,7 @@ public interface DebtorMapper {
 
     Debtor toDebtor(DebtorDTO debtorDTO);
 
-    DebtorDTO toDebtorDto(Debtor debtor);
+    DebtorDTO toDTO(Debtor debtor);
 
     List<DebtorDTO> toDTOList(List<Debtor> debtor);
 
