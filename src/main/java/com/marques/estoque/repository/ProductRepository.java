@@ -11,19 +11,14 @@ import java.util.Optional;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    // Busca todos os produtos que pertencem a um usuário específico
     List<Product> findAllByUser(User user);
 
-    // Busca um produto pelo ID, mas SOMENTE se ele pertencer ao usuário fornecido
     Optional<Product> findByIdAndUser(Long id, User user);
 
-    // Busca um produto pelo nome (ignorando maiúsculas/minúsculas), mas SOMENTE se ele pertencer ao usuário
     Optional<Product> findByNameIgnoreCaseAndUser(String name, User user);
 
-    // Verifica se um produto existe pelo nome para um usuário específico
     boolean existsByNameAndUser(String name, User user);
 
-    // Verifica se um produto existe pelo ID para um usuário específico
     boolean existsByIdAndUser(Long id, User user);
 
 }

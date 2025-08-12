@@ -13,6 +13,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
@@ -21,9 +23,6 @@ public class DebtorService {
 
     @Autowired
     private DebtorRepository debtorRepository;
-
-    @Autowired
-    private UserService userService;
 
     public DebtorDTO findById(Long id) {
         log.info("Buscando devedor por id para o usuário logado");
@@ -45,6 +44,8 @@ public class DebtorService {
         validateDebtor(debtorDTO.getName(), debtorDTO.getValue(), debtorDTO.getId());
 
         Debtor debtor =  DebtorMapper.INSTANCE.toDebtor(debtorDTO);
+
+        debtor.setDate(LocalDateTime.now(ZoneOffset.UTC));
 
         debtor.setUser(getCurrentUser());
 
