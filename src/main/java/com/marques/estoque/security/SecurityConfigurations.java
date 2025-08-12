@@ -29,9 +29,10 @@ public class SecurityConfigurations {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/users/**").permitAll()
+                        .requestMatchers("/users/**").hasRole("USER")
                         .requestMatchers("/product/**").hasRole("USER")
                         .requestMatchers("/category/**").hasRole("USER")
+                        .requestMatchers("/debtor/**").hasRole("USER")
 
                         .requestMatchers("/v3/api-docs/**").permitAll()
                         .requestMatchers("/swagger-ui/**").permitAll()
