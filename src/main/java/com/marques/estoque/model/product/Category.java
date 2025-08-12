@@ -22,8 +22,8 @@ public class Category {
     @Column(name = "id", nullable = false, unique = true)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY) // Muitos produtos para Um usuário. LAZY é melhor para performance.
-    @JoinColumn(name = "user_id", nullable = false) // Nome da coluna de chave estrangeira no banco.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Column(name = "name")

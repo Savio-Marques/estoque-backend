@@ -19,7 +19,6 @@ public interface ProductMapper {
     @Mapping(source = "categories.id", target = "categoryId")
     List<ProductDTO> toDTOList(List<Product> product);
 
-
     @Mapping(target = "categories", ignore = true) // A categoria será definida no service
     Product toEntity(ProductDTO dto);
 
