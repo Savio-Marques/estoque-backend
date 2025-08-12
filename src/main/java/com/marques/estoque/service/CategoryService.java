@@ -112,7 +112,7 @@ public class CategoryService {
             throw new ArgumentException("Nome da categoria não pode ser vazio");
         }
 
-        if (categoryRepository.existsByNameAndUser(name, getCurrentUser())) {
+        if (categoryRepository.findByNameIgnoreCaseAndUser(name, getCurrentUser()).isPresent()) {
             log.error("Categoria já existente");
             throw new DuplicateDataException("Categoria " + name + " já existente");
         }
