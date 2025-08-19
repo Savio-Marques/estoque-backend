@@ -2,6 +2,7 @@ package com.marques.estoque.controller;
 
 
 import com.marques.estoque.dto.ProductDTO;
+import com.marques.estoque.dto.SummaryProductDTO;
 import com.marques.estoque.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -111,4 +112,16 @@ public class ProductController {
     public ResponseEntity<String> delete(@Parameter(description = "ID do produto a ser buscado") @PathVariable(name = "id") Long id) {
         return ResponseEntity.ok().body(productService.delete(id));
     }
+
+    @Operation(summary = "Sumário de produtos")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Produto retornado com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Nenhum produto encontrado"),
+            @ApiResponse(responseCode = "403", description = "Acesso negado")
+    })
+    @GetMapping("/summary")
+    public ResponseEntity<SummaryProductDTO> summaryProducts() {
+        return ResponseEntity.ok().body(productService.summaryProduct());
+    }
+
 }

@@ -1,6 +1,7 @@
 package com.marques.estoque.service;
 
 import com.marques.estoque.dto.ProductDTO;
+import com.marques.estoque.dto.SummaryProductDTO;
 import com.marques.estoque.exception.ArgumentException;
 import com.marques.estoque.exception.NotFoundException;
 import com.marques.estoque.model.product.Product;
@@ -30,6 +31,7 @@ public class ProductService {
     @Autowired
     private ProductMapper productMapper;
 
+    private static final int LOW_STOCK_THRESHOLD = 5;
 
     public ProductDTO findById(Long id) {
         log.info("Buscando produto por id para o usuário logado");
@@ -112,6 +114,15 @@ public class ProductService {
 
         productRepository.deleteById(id);
         return "Produto com id " + id + " deletado com sucesso";
+    }
+
+    public SummaryProductDTO summaryProduct(){
+
+        Integer total = productRepository.countTotalProducts(getCurrentUser());
+        Integer lowStock = productRepository.countLowStockProducts(getCurrentUser(), LOW_STOCK_THRESHOLD);
+        Integer noStock = productRepository.countOutOfStockProducts(getCurrentUser());
+
+        return new SummaryProductDTO(total, lowStock, noStock);
     }
 
     /*

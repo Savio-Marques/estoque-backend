@@ -29,7 +29,7 @@ public class SecurityConfigurations {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/users/**").hasRole("USER")
+                        .requestMatchers("/users/**").permitAll()
                         .requestMatchers("/product/**").hasRole("USER")
                         .requestMatchers("/category/**").hasRole("USER")
                         .requestMatchers("/debtor/**").hasRole("USER")
