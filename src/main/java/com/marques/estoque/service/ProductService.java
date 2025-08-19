@@ -117,6 +117,7 @@ public class ProductService {
     }
 
     public SummaryProductDTO summaryProduct(){
+        log.info("Contabilizando dados dos produtos");
 
         Integer total = productRepository.countTotalProducts(getCurrentUser());
         Integer lowStock = productRepository.countLowStockProducts(getCurrentUser(), LOW_STOCK_THRESHOLD);

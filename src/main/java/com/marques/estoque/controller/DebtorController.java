@@ -2,6 +2,7 @@ package com.marques.estoque.controller;
 
 
 import com.marques.estoque.dto.DebtorDTO;
+import com.marques.estoque.dto.SummaryDebtorsDTO;
 import com.marques.estoque.service.DebtorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,7 +30,7 @@ public class DebtorController {
 
     @Operation(summary = "Busca um devedor por ID")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Produto retornado com sucesso"),
+            @ApiResponse(responseCode = "200", description = "Devedor retornado com sucesso"),
             @ApiResponse(responseCode = "404", description = "Nenhum devedor encontrado"),
             @ApiResponse(responseCode = "403", description = "Acesso negado")
     })
@@ -40,7 +41,7 @@ public class DebtorController {
 
     @Operation(summary = "Busca por nome de devedor do usuário logado")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Produto retornado com sucesso"),
+            @ApiResponse(responseCode = "200", description = "Devedor retornado com sucesso"),
             @ApiResponse(responseCode = "404", description = "Nenhum devedor encontrado"),
             @ApiResponse(responseCode = "403", description = "Acesso negado")
     })
@@ -62,7 +63,7 @@ public class DebtorController {
 
     @Operation(summary = "Cadastro de devedor do usuário logado")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Produto cadastrado com sucesso"),
+            @ApiResponse(responseCode = "201", description = "Devedor cadastrado com sucesso"),
             @ApiResponse(responseCode = "400", description = "Campos em falta"),
             @ApiResponse(responseCode = "403", description = "Acesso negado")
     })
@@ -77,10 +78,10 @@ public class DebtorController {
 
     @Operation(summary = "Atualização completa de devedor do usuário logado")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Produto atualizado com sucesso"),
+            @ApiResponse(responseCode = "200", description = "Devedor atualizado com sucesso"),
             @ApiResponse(responseCode = "400", description = "Campos em falta"),
             @ApiResponse(responseCode = "403", description = "Acesso negado"),
-            @ApiResponse(responseCode = "404", description = "Produto não encontrado")
+            @ApiResponse(responseCode = "404", description = "Devedor não encontrado")
     })
     @PutMapping("/{id}")
     public ResponseEntity<DebtorDTO> update(@Valid @RequestBody DebtorDTO debtorDTO,
@@ -91,12 +92,23 @@ public class DebtorController {
 
     @Operation(summary = "Exclusão de devedor do usuário logado")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Produto deletado com sucesso"),
+            @ApiResponse(responseCode = "200", description = "Devedor deletado com sucesso"),
             @ApiResponse(responseCode = "403", description = "Acesso negado"),
-            @ApiResponse(responseCode = "404", description = "Produto não encontrado")
+            @ApiResponse(responseCode = "404", description = "Devedor não encontrado")
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<String> delete(@Parameter(description = "ID do devedor a ser buscado") @PathVariable(name = "id") Long id) {
         return ResponseEntity.ok().body(debtorService.delete(id));
+    }
+
+    @Operation(summary = "Sumário de devedores")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Sumário retornado com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Nenhum valor encontrado"),
+            @ApiResponse(responseCode = "403", description = "Acesso negado")
+    })
+    @GetMapping("/summary")
+    public ResponseEntity<SummaryDebtorsDTO> summaryDebtors() {
+        return ResponseEntity.ok().body(debtorService.summaryDebtors());
     }
 }

@@ -12,19 +12,12 @@ import java.util.Optional;
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {
 
-    // Busca todas as categorias que pertencem a um usuário específico
     List<Category> findAllByUser(User user);
 
-    // Busca uma categoria pelo ID, mas SOMENTE se ele pertencer ao usuário fornecido
     Optional<Category> findByIdAndUser(Long id, User user);
 
-    // Busca uma categoria pelo nome (ignorando maiúsculas/minúsculas), mas SOMENTE se ele pertencer ao usuário
     Optional<Category> findByNameIgnoreCaseAndUser(String name, User user);
 
-    // Verifica se umuma categoria existe pelo nome para um usuário específico
-    boolean existsByNameAndUser(String name, User user);
-
-    // Verifica se uma categoria existe pelo ID para um usuário específico
     boolean existsByIdAndUser(Long id, User user);
 
 

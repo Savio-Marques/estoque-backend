@@ -1,6 +1,7 @@
 package com.marques.estoque.service;
 
 import com.marques.estoque.dto.DebtorDTO;
+import com.marques.estoque.dto.SummaryDebtorsDTO;
 import com.marques.estoque.exception.ArgumentException;
 import com.marques.estoque.exception.NotFoundException;
 import com.marques.estoque.model.Debtor;
@@ -16,6 +17,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -72,6 +74,18 @@ public class DebtorService {
 
         debtorRepository.deleteById(id);
         return "Devedor com id " + id + " deletado com sucesso";
+    }
+
+    public SummaryDebtorsDTO summaryDebtors(){
+        log.info("Contando quantidade e total de valores dos devedores");
+
+        BigDecimal totalValue = Optional.ofNullable(debtorRepository.sumTotalValueByUser(getCurrentUser()))
+                .orElse(BigDecimal.ZERO);
+
+        Integer totalDebtors = debtorRepository.countTotalDebtorsByUser(getCurrentUser());
+
+        return new SummaryDebtorsDTO(totalValue, totalDebtors);
+
     }
 
     /*
