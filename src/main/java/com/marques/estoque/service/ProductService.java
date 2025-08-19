@@ -126,6 +126,23 @@ public class ProductService {
         return new SummaryProductDTO(total, lowStock, noStock);
     }
 
+    public List<ProductDTO> findProductsWithFilters(String name, String categoryName) {
+        User currentUser = getCurrentUser();
+
+        boolean hasNameFilter = name != null && !name.trim().isEmpty();
+        boolean hasCategoryFilter = categoryName != null && !categoryName.trim().isEmpty() && !categoryName.equalsIgnoreCase("all");
+
+        if (hasNameFilter && hasCategoryFilter) {
+            return ProductMapper.INSTANCE.toDTOList(productRepository.findByUserAndNameAndCategory(currentUser, name, categoryName));
+        } else if (hasNameFilter) {
+            return ProductMapper.INSTANCE.toDTOList(productRepository.findByUserAndName(currentUser, name));
+        } else if (hasCategoryFilter) {
+            return ProductMapper.INSTANCE.toDTOList(productRepository.findByUserAndCategory(currentUser, categoryName));
+        } else {
+            return ProductMapper.INSTANCE.toDTOList(productRepository.findAllByUser(currentUser));
+        }
+    }
+
     /*
 
     -------------FUNÇÕES AUXILIARES-------------
