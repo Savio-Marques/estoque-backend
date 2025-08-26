@@ -3,6 +3,7 @@ package com.marques.estoque.service;
 import com.marques.estoque.dto.ProductDTO;
 import com.marques.estoque.dto.SummaryProductDTO;
 import com.marques.estoque.exception.ArgumentException;
+import com.marques.estoque.exception.DuplicateDataException;
 import com.marques.estoque.exception.NotFoundException;
 import com.marques.estoque.model.product.Product;
 import com.marques.estoque.model.user.User;
@@ -38,21 +39,9 @@ public class ProductService {
         return ProductMapper.INSTANCE.toDTO(returnProductWithId(id, getCurrentUser()));
     }
 
-    public ProductDTO findByName(String name) {
+    public List<ProductDTO> findByName(String name) {
         log.info("Buscando produto por nome para o usuário logado");
-        return ProductMapper.INSTANCE.toDTO(returnProductWithName(name, getCurrentUser()));
-    }
-
-    public List<ProductDTO> findAll() {
-        log.info("Buscando todos os produtos para o usuário logado");
-        List<Product> listProduct = productRepository.findAllByUser(getCurrentUser());
-
-        if(listProduct.isEmpty()) {
-            log.warn("Nenhum produto encontrado");
-            throw new NotFoundException("Nenhum produto encontrado");
-        }
-
-        return ProductMapper.INSTANCE.toDTOList(listProduct);
+        return ProductMapper.INSTANCE.toDTOList(returnProductWithName(name, getCurrentUser()));
     }
 
     public ProductDTO save(ProductDTO productDTO) {
@@ -61,11 +50,7 @@ public class ProductService {
         validateProduct(productDTO.getName(), productDTO.getQtd() ,productDTO.getCategoryId());
 
         if (productRepository.existsByNameAndUser(productDTO.getName(), getCurrentUser())){
-            Product product = returnProductWithName(productDTO.getName(), getCurrentUser());
-
-            product.setQtd(productDTO.getQtd() + product.getQtd());
-
-            return ProductMapper.INSTANCE.toDTO(productRepository.save(product));
+            throw new DuplicateDataException("Já existe um produto cadastrado com esse nome.");
         }
 
         Product product = productMapper.toEntity(productDTO);
@@ -87,24 +72,6 @@ public class ProductService {
         return ProductMapper.INSTANCE.toDTO(productRepository.save(product));
     }
 
-    public ProductDTO updatePatch(Long id, ProductDTO productDTO) {
-        log.info("Atualizando id: {} no banco de dados", id);
-
-        Product product = returnProductWithId(id, getCurrentUser());
-
-        if (productDTO.getName() != null) {
-            product.setName(productDTO.getName());
-        }
-        if (productDTO.getQtd() != null) {
-            product.setQtd(productDTO.getQtd());
-        }
-        if (productDTO.getCategoryId() != null) {
-            product.setCategories(categoryService.returnCategory(productDTO.getCategoryId(), getCurrentUser()));
-        }
-
-        return ProductMapper.INSTANCE.toDTO(productRepository.save(product));
-    }
-
     public String delete(Long id) {
         log.info("Deletando id: {} do banco de dados", id);
         if (!productRepository.existsByIdAndUser(id, getCurrentUser())){
@@ -119,29 +86,33 @@ public class ProductService {
     public SummaryProductDTO summaryProduct(){
         log.info("Contabilizando dados dos produtos");
 
-        Integer total = productRepository.countTotalProducts(getCurrentUser());
-        Integer lowStock = productRepository.countLowStockProducts(getCurrentUser(), LOW_STOCK_THRESHOLD);
-        Integer noStock = productRepository.countOutOfStockProducts(getCurrentUser());
+        List<Product> total = productRepository.countTotalProducts(getCurrentUser());
+        List<Product> lowStock = productRepository.countLowStockProductsOrderByIdAsc(getCurrentUser(), LOW_STOCK_THRESHOLD);
+        List<Product> noStock = productRepository.countOutOfStockProductsOrderByIdAsc(getCurrentUser());
 
-        return new SummaryProductDTO(total, lowStock, noStock);
+        return new SummaryProductDTO(total.size(), lowStock.size(), noStock.size());
     }
 
-    public List<ProductDTO> findProductsWithFilters(String name, String categoryName) {
-        User currentUser = getCurrentUser();
+    public List<ProductDTO> findAll() {
+        List<Product> productList = productRepository.findAllByUserOrderByIdAsc(getCurrentUser());
 
-        boolean hasNameFilter = name != null && !name.trim().isEmpty();
-        boolean hasCategoryFilter = categoryName != null && !categoryName.trim().isEmpty() && !categoryName.equalsIgnoreCase("all");
-
-        if (hasNameFilter && hasCategoryFilter) {
-            return ProductMapper.INSTANCE.toDTOList(productRepository.findByUserAndNameAndCategory(currentUser, name, categoryName));
-        } else if (hasNameFilter) {
-            return ProductMapper.INSTANCE.toDTOList(productRepository.findByUserAndName(currentUser, name));
-        } else if (hasCategoryFilter) {
-            return ProductMapper.INSTANCE.toDTOList(productRepository.findByUserAndCategory(currentUser, categoryName));
-        } else {
-            return ProductMapper.INSTANCE.toDTOList(productRepository.findAllByUser(currentUser));
-        }
+        return ProductMapper.INSTANCE.toDTOList(productList);
     }
+
+
+
+    public List<ProductDTO> lowStockProductFilter(){
+        List<Product> lowStockProducts = productRepository.countLowStockProductsOrderByIdAsc(getCurrentUser(), LOW_STOCK_THRESHOLD);
+
+        return ProductMapper.INSTANCE.toDTOList(lowStockProducts);
+    }
+
+    public List<ProductDTO> noStockProductFilter(){
+        List<Product> noStockProducts = productRepository.countOutOfStockProductsOrderByIdAsc(getCurrentUser());
+
+        return ProductMapper.INSTANCE.toDTOList(noStockProducts);
+    }
+
 
     /*
 
@@ -158,8 +129,8 @@ public class ProductService {
                 .orElseThrow(() -> new NotFoundException("Produto com o id: " + id + " não encontrado"));
     }
 
-    private Product returnProductWithName(String name, User user) {
-        return productRepository.findByNameIgnoreCaseAndUser(name, user)
+    private List<Product> returnProductWithName(String name, User user) {
+        return productRepository.findByNameContainingIgnoreCaseAndUser(name, user)
                 .orElseThrow(() -> new NotFoundException("Produto com o nome: "+ name + " não encontrado"));
     }
 
@@ -180,10 +151,6 @@ public class ProductService {
             throw new ArgumentException("A quantidade do produto não pode ser nulo");
         }
 
-        if (id == null) {
-            log.error("O Id da categoria não pode ser nulo");
-            throw new ArgumentException("O Id da categoria não pode ser nulo");
-        }
     }
 
 }

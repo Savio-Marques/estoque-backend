@@ -1,6 +1,7 @@
 package com.marques.estoque.service;
 
 import com.marques.estoque.dto.DebtorDTO;
+import com.marques.estoque.dto.DebtorsPageDTO;
 import com.marques.estoque.dto.SummaryDebtorsDTO;
 import com.marques.estoque.exception.ArgumentException;
 import com.marques.estoque.exception.NotFoundException;
@@ -88,6 +89,30 @@ public class DebtorService {
 
     }
 
+    public DebtorsPageDTO findDebtorsWithFilters(String clientName) {
+        User currentUser = getCurrentUser();
+
+        List<Debtor> filteredDebtors;
+
+        boolean hasNameFilter = clientName != null && !clientName.trim().isEmpty();
+
+        if (hasNameFilter) {
+            filteredDebtors = debtorRepository.findByUserAndNameContainingIgnoreCase(currentUser, clientName);
+        } else {
+            filteredDebtors = debtorRepository.findAllByUser(currentUser);
+        }
+
+        Integer totalDebtors = filteredDebtors.size();
+        BigDecimal totalValue = filteredDebtors.stream()
+                .map(Debtor::getValue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        SummaryDebtorsDTO summary = new SummaryDebtorsDTO(totalValue, totalDebtors);
+        List<DebtorDTO> debtorDTOs = DebtorMapper.INSTANCE.toDTOList(filteredDebtors);
+
+        return new DebtorsPageDTO(debtorDTOs, summary);
+    }
+
     /*
 
     -------------FUNÇÕES AUXILIARES-------------
@@ -124,11 +149,6 @@ public class DebtorService {
         if (value == null) {
             log.error("O valor devido não pode ser nula");
             throw new ArgumentException("O valor devido não pode ser nulo");
-        }
-
-        if (id == null) {
-            log.error("O Id da categoria não pode ser nulo");
-            throw new ArgumentException("O Id da categoria não pode ser nulo");
         }
     }
 }

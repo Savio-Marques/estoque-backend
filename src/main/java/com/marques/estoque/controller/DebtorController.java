@@ -2,6 +2,7 @@ package com.marques.estoque.controller;
 
 
 import com.marques.estoque.dto.DebtorDTO;
+import com.marques.estoque.dto.DebtorsPageDTO;
 import com.marques.estoque.dto.SummaryDebtorsDTO;
 import com.marques.estoque.service.DebtorService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,15 +40,15 @@ public class DebtorController {
         return ResponseEntity.ok().body(debtorService.findById(id));
     }
 
-    @Operation(summary = "Busca por nome de devedor do usuário logado")
+    @Operation(summary = "Busca todos os devedores")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Devedor retornado com sucesso"),
             @ApiResponse(responseCode = "404", description = "Nenhum devedor encontrado"),
             @ApiResponse(responseCode = "403", description = "Acesso negado")
     })
-    @GetMapping("/pesquisar")
-    public ResponseEntity<DebtorDTO> findByName(@Parameter(description = "Nome do devedor a ser buscado") @RequestParam String name) {
-        return ResponseEntity.ok().body(debtorService.findByName(name));
+    @GetMapping
+    public ResponseEntity<List<DebtorDTO>> findByAll() {
+        return ResponseEntity.ok().body(debtorService.findAll());
     }
 
     @Operation(summary = "Lista todos os devedores do usuário logado")
@@ -56,9 +57,10 @@ public class DebtorController {
             @ApiResponse(responseCode = "404", description = "Nenhum devedor encontrado"),
             @ApiResponse(responseCode = "403", description = "Acesso negado")
     })
-    @GetMapping
-    public ResponseEntity<List<DebtorDTO>> findAll() {
-        return ResponseEntity.ok().body(debtorService.findAll());
+    @GetMapping("/pesquisar")
+    public ResponseEntity<DebtorsPageDTO> findDebtors(@RequestParam(required = false) String name) {
+        DebtorsPageDTO pageData = debtorService.findDebtorsWithFilters(name);
+        return ResponseEntity.ok(pageData);
     }
 
     @Operation(summary = "Cadastro de devedor do usuário logado")

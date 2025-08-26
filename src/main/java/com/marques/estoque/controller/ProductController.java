@@ -46,7 +46,7 @@ public class ProductController {
             @ApiResponse(responseCode = "403", description = "Acesso negado")
     })
     @GetMapping("/pesquisar")
-    public ResponseEntity<ProductDTO> findByName(@Parameter(description = "Nome do produto a ser buscado") @RequestParam String name) {
+    public ResponseEntity<List<ProductDTO>> findByName(@Parameter(description = "Nome do produto a ser buscado") @RequestParam String name) {
         return ResponseEntity.ok().body(productService.findByName(name));
     }
 
@@ -78,19 +78,6 @@ public class ProductController {
         return ResponseEntity.ok().body(productService.update(id, productDTO));
     }
 
-    @Operation(summary = "Atualização parcial de produto do usuário logado")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Produto atualizado com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Campos em falta"),
-            @ApiResponse(responseCode = "403", description = "Acesso negado"),
-            @ApiResponse(responseCode = "404", description = "Produto não encontrado")
-    })
-    @PatchMapping("/{id}")
-    public ResponseEntity<ProductDTO> updatePatch(@Valid @RequestBody ProductDTO patchDTO,
-                                                  @Parameter(description = "ID do produto a ser buscado") @PathVariable(name = "id") Long id){
-        return ResponseEntity.ok().body(productService.updatePatch(id, patchDTO));
-    }
-
     @Operation(summary = "Exclusão de produto do usuário logado")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Produto deletado com sucesso"),
@@ -120,10 +107,32 @@ public class ProductController {
             @ApiResponse(responseCode = "403", description = "Acesso negado")
     })
     @GetMapping
-    public ResponseEntity<List<ProductDTO>> findProducts(
-            @Parameter(description = "Nome do produto a ser buscado")@RequestParam(required = false) String name,
-            @Parameter(description = "Categoria do produto a ser buscado") @RequestParam(required = false) String category) {
-        List<ProductDTO> products = productService.findProductsWithFilters(name, category);
+    public ResponseEntity<List<ProductDTO>> findProducts() {
+        List<ProductDTO> products = productService.findAll();
+        return ResponseEntity.ok(products);
+    }
+
+    @Operation(summary = "Lista todos os produtos com baixo estoque do usuário logado")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de produtos retornada com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Nenhum produto encontrado"),
+            @ApiResponse(responseCode = "403", description = "Acesso negado")
+    })
+    @GetMapping("/lowStock")
+    public ResponseEntity<List<ProductDTO>> lowStockProductsFilter() {
+        List<ProductDTO> products = productService.lowStockProductFilter();
+        return ResponseEntity.ok(products);
+    }
+
+    @Operation(summary = "Lista todos os produtos sem estoque do usuário logado")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de produtos retornada com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Nenhum produto encontrado"),
+            @ApiResponse(responseCode = "403", description = "Acesso negado")
+    })
+    @GetMapping("/noStock")
+    public ResponseEntity<List<ProductDTO>> noStockProductsFilter() {
+        List<ProductDTO> products = productService.noStockProductFilter();
         return ResponseEntity.ok(products);
     }
 

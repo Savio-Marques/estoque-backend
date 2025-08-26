@@ -12,7 +12,7 @@ import java.util.Optional;
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {
 
-    List<Category> findAllByUser(User user);
+    List<Category> findAllByUserOrderByIdAsc(User user);
 
     Optional<Category> findByIdAndUser(Long id, User user);
 

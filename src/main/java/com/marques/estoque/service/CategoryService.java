@@ -37,7 +37,7 @@ public class CategoryService {
     public List<CategoryDTO> findAll() {
         log.info("Buscando todos");
 
-        List<Category> categories = categoryRepository.findAllByUser(getCurrentUser());
+        List<Category> categories = categoryRepository.findAllByUserOrderByIdAsc(getCurrentUser());
 
         if (categories.isEmpty()) {
             log.error("Nenhuma categoria encontrada");
@@ -78,7 +78,7 @@ public class CategoryService {
 
         if (!findById(id).getProducts().isEmpty()) {
             log.error("Categoria com um ou mais produtos registados");
-            throw new GeneralException("Não é possível excluir categorias com um ou mais produtos registados, Por favor exclua primeiro os produtos.");
+            throw new GeneralException("Não é possível excluir categorias com produtos associodados, exluir produtos primeiro.");
         }
 
         categoryRepository.deleteById(id);

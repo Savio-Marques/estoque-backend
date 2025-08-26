@@ -1,7 +1,6 @@
 package com.marques.estoque.repository;
 
 import com.marques.estoque.model.Debtor;
-import com.marques.estoque.model.product.Category;
 import com.marques.estoque.model.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -28,5 +27,9 @@ public interface DebtorRepository extends JpaRepository<Debtor, Long> {
 
     @Query("SELECT COUNT(d) FROM Debtor d WHERE d.user = :user")
     Integer countTotalDebtorsByUser(@Param("user") User user);
+
+    List<Debtor> findByUserAndNameContainingIgnoreCase(User user, String clientName);
+
+
 
 }
