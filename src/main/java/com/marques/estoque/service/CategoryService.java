@@ -39,11 +39,6 @@ public class CategoryService {
 
         List<Category> categories = categoryRepository.findAllByUserOrderByIdAsc(getCurrentUser());
 
-        if (categories.isEmpty()) {
-            log.error("Nenhuma categoria encontrada");
-            throw new NotFoundException("Nenhuma categoria encontrada");
-        }
-
         return CategoryMapper.INSTANCE.toDTOList(categories);
     }
 
