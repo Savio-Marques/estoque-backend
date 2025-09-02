@@ -8,7 +8,15 @@ Este projeto é uma API RESTful de controle de estoque, desenvolvida para auxili
 
 O backend foi construído com **Java** e o framework **Spring Boot**, enquanto o frontend foi desenvolvido com a biblioteca **React**. O projeto encontra-se em sua versão 1.0, com suas funcionalidades principais finalizadas, mas há planos para aprimoramentos e novas features futuras.
 
-**[Clique aqui para acessar a aplicação](https://estoque-frontend-khaki.vercel.app)**
+---
+
+### 🔗 Links Importantes
+
+* **Demonstração em vídeo:** [Assista aqui](https://youtu.be/z7ac9HeyzKw)
+* **Aplicação em produção:** [Acesse o site](https://buscapestoque.vercel.app)
+* **Repositório do Frontend(Telas):** [Ver no GitHub](https://github.com/Savio-Marques/estoque-frontend)
+
+---
 
 ## ✨ Funcionalidades
 
@@ -46,7 +54,6 @@ Este projeto foi desenvolvido utilizando as seguintes tecnologias:
 
 * **React** - Biblioteca para a construção da interface de usuário.
 * **Axios** - Para realizar as requisições HTTP para a API.
-* **[Link para o repositório do Frontend](https://github.com/Savio-Marques/estoque-frontend)**
 
 ## Status do Projeto
 
