@@ -24,7 +24,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryService categoryService;
-    private final ProductMapper productMapper; // Uso consistente da injeção
+    private final ProductMapper productMapper;
 
     private static final int LOW_STOCK_THRESHOLD = 5;
 
@@ -56,7 +56,7 @@ public class ProductService {
         validateForCreate(name, productDTO.getQtd());
 
         Product product = productMapper.toEntity(productDTO);
-        product.setName(name); // Usa a variável sanitizada
+        product.setName(name);
         product.setCategories(categoryService.returnCategory(productDTO.getCategoryId(), getCurrentUser()));
         product.setUser(getCurrentUser());
 
@@ -71,7 +71,7 @@ public class ProductService {
         String name = normalizeName(productDTO.getName());
         validateForUpdate(id, name, productDTO.getQtd());
 
-        product.setName(name); // Usa a variável sanitizada
+        product.setName(name);
         product.setQtd(productDTO.getQtd());
         product.setCategories(categoryService.returnCategory(productDTO.getCategoryId(), getCurrentUser()));
 
@@ -100,14 +100,14 @@ public class ProductService {
     public List<ProductDTO> lowStockProductFilter(){
         List<Product> lowStockProducts = productRepository.countLowStockProductsOrderByIdAsc(getCurrentUser(), LOW_STOCK_THRESHOLD);
 
-        return ProductMapper.INSTANCE.toDTOList(lowStockProducts);
+        return productMapper.toDTOList(lowStockProducts);
     }
 
     @Transactional(readOnly = true)
     public List<ProductDTO> noStockProductFilter(){
         List<Product> noStockProducts = productRepository.countOutOfStockProductsOrderByIdAsc(getCurrentUser());
 
-        return ProductMapper.INSTANCE.toDTOList(noStockProducts);
+        return productMapper.toDTOList(noStockProducts);
     }
 
     /*

@@ -16,28 +16,12 @@ public interface CategoryMapper {
 
     CategoryMapper INSTANCE = Mappers.getMapper(CategoryMapper.class);
 
-    @Mapping(target = "products", expression = "java(mapProducts(category.getProducts()))")
+    @Mapping(target = "products", ignore = true)
     CategoryDTO toDTO(Category category);
 
-    @Mapping(target = "products", expression = "java(mapProducts(category.getProducts()))")
+    @Mapping(target = "products", ignore = true)
     List<CategoryDTO> toDTOList(List<Category> categories);
 
-    @Mapping(target = "products", ignore = true) // Os produtos serão definidos no service
+    @Mapping(target = "products", ignore = true)
     Category toEntity(CategoryDTO dto);
-
-    default List<ProductDTO> mapProducts(List<Product> products) {
-        if (products == null) {
-            return null;
-        }
-        return products.stream()
-                .map( product -> {
-                    ProductDTO productDTO = new ProductDTO();
-                    productDTO.setId(product.getId());
-                    productDTO.setName(product.getName());
-                    productDTO.setQtd(product.getQtd());
-                    productDTO.setCategoryId(product.getCategories().getId());
-                    return productDTO;
-                })
-                .collect(Collectors.toList());
-    }
 }

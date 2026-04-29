@@ -23,18 +23,19 @@ import java.util.List;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final CategoryMapper categoryMapper;
 
     @Transactional(readOnly = true)
     public CategoryDTO findById(Long id) {
         log.info("Procurado por ID");
-        return CategoryMapper.INSTANCE.toDTO(returnCategory(id, getCurrentUser()));
+        return categoryMapper.toDTO(returnCategory(id, getCurrentUser()));
     }
 
     @Transactional(readOnly = true)
     public CategoryDTO findByName(String name) {
         log.info("Procurando por nome");
 
-        return CategoryMapper.INSTANCE.toDTO(returnCategoryByName(name, getCurrentUser()));
+        return categoryMapper.toDTO(returnCategoryByName(name, getCurrentUser()));
     }
 
     @Transactional(readOnly = true)
@@ -43,7 +44,7 @@ public class CategoryService {
 
         List<Category> categories = categoryRepository.findAllByUserOrderByIdAsc(getCurrentUser());
 
-        return CategoryMapper.INSTANCE.toDTOList(categories);
+        return categoryMapper.toDTOList(categories);
     }
 
     @Transactional
@@ -52,11 +53,11 @@ public class CategoryService {
         String name = normalizeName(categoryDTO.getName());
         validateNameForCreate(name);
 
-        Category category = CategoryMapper.INSTANCE.toEntity(categoryDTO);
+        Category category = categoryMapper.toEntity(categoryDTO);
         category.setName(name);
         category.setUser(getCurrentUser());
 
-        return CategoryMapper.INSTANCE.toDTO(categoryRepository.save(category));
+        return categoryMapper.toDTO(categoryRepository.save(category));
     }
 
     @Transactional
@@ -67,7 +68,7 @@ public class CategoryService {
         validateNameForUpdate(id, name);
 
         category.setName(name);
-        return CategoryMapper.INSTANCE.toDTO(categoryRepository.save(category));
+        return categoryMapper.toDTO(categoryRepository.save(category));
     }
 
     @Transactional

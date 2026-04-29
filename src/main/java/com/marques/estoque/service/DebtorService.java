@@ -27,23 +27,24 @@ import java.util.Optional;
 public class DebtorService {
 
     private final DebtorRepository debtorRepository;
+    private final DebtorMapper debtorMapper;
 
     @Transactional(readOnly = true)
     public DebtorDTO findById(Long id) {
         log.info("Buscando devedor por id para o usuário logado");
-        return DebtorMapper.INSTANCE.toDTO(returnDebtorWithId(id, getCurrentUser()));
+        return debtorMapper.toDTO(returnDebtorWithId(id, getCurrentUser()));
     }
 
     @Transactional(readOnly = true)
     public DebtorDTO findByName(String name) {
         log.info("Buscando devedor por nome para o usuário logado");
-        return DebtorMapper.INSTANCE.toDTO(returnDebtorWithName(name, getCurrentUser()));
+        return debtorMapper.toDTO(returnDebtorWithName(name, getCurrentUser()));
     }
 
     @Transactional(readOnly = true)
     public List<DebtorDTO> findAll() {
         log.info("Buscando todos os devedores para o usuário logado");
-        return DebtorMapper.INSTANCE.toDTOList(debtorRepository.findAllByUser(getCurrentUser()));
+        return debtorMapper.toDTOList(debtorRepository.findAllByUser(getCurrentUser()));
     }
 
     @Transactional
@@ -52,12 +53,12 @@ public class DebtorService {
         String name = normalizeName(debtorDTO.getName());
         validateDebtor(name, debtorDTO.getValue());
 
-        Debtor debtor = DebtorMapper.INSTANCE.toDebtor(debtorDTO);
+        Debtor debtor = debtorMapper.toDebtor(debtorDTO);
         debtor.setName(name);
         debtor.setDate(LocalDateTime.now(ZoneOffset.UTC));
         debtor.setUser(getCurrentUser());
 
-        return DebtorMapper.INSTANCE.toDTO(debtorRepository.save(debtor));
+        return debtorMapper.toDTO(debtorRepository.save(debtor));
     }
 
     @Transactional
@@ -74,7 +75,7 @@ public class DebtorService {
         debtor.setDescription(debtorDTO.getDescription());
         debtor.setUser(getCurrentUser());
 
-        return DebtorMapper.INSTANCE.toDTO(debtorRepository.save(debtor));
+        return debtorMapper.toDTO(debtorRepository.save(debtor));
     }
 
     @Transactional
@@ -116,7 +117,7 @@ public class DebtorService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         SummaryDebtorsDTO summary = new SummaryDebtorsDTO(totalValue, totalDebtors);
-        List<DebtorDTO> debtorDTOs = DebtorMapper.INSTANCE.toDTOList(filteredDebtors);
+        List<DebtorDTO> debtorDTOs = debtorMapper.toDTOList(filteredDebtors);
 
         return new DebtorsPageDTO(debtorDTOs, summary);
     }
