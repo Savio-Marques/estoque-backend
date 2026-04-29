@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -22,62 +23,69 @@ import java.util.List;
 public class ProductService {
 
     private final ProductRepository productRepository;
-
     private final CategoryService categoryService;
-
-    private final ProductMapper productMapper;
+    private final ProductMapper productMapper; // Uso consistente da injeção
 
     private static final int LOW_STOCK_THRESHOLD = 5;
 
+    @Transactional(readOnly = true)
     public ProductDTO findById(Long id) {
-        log.info("Buscando produto por id para o usuário logado");
-        return ProductMapper.INSTANCE.toDTO(returnProductWithId(id, getCurrentUser()));
+        log.info("Buscando produto por id");
+        return productMapper.toDTO(returnProduct(id, getCurrentUser()));
     }
 
+    @Transactional(readOnly = true)
+    public List<ProductDTO> findAll() {
+        log.info("Buscando todos os produtos");
+        List<Product> productList = productRepository.findAllByUserOrderByIdAsc(getCurrentUser());
+        return productMapper.toDTOList(productList);
+    }
+
+    @Transactional(readOnly = true)
     public List<ProductDTO> findByName(String name) {
-        log.info("Buscando produto por nome para o usuário logado");
-        return ProductMapper.INSTANCE.toDTOList(returnProductWithName(name, getCurrentUser()));
+        log.info("Buscando produto por nome");
+        List<Product> products = productRepository.findByNameContainingIgnoreCaseAndUser(normalizeName(name), getCurrentUser());
+        return productMapper.toDTOList(products);
     }
 
+    @Transactional
     public ProductDTO save(ProductDTO productDTO) {
-        log.info("Salvando produto no banco de dados para o usuário logado");
+        log.info("Salvando produto");
 
-        validateProduct(productDTO.getName(), productDTO.getQtd() ,productDTO.getCategoryId());
-
-        if (productRepository.existsByNameAndUser(productDTO.getName(), getCurrentUser())){
-            throw new DuplicateDataException("Já existe um produto cadastrado com esse nome.");
-        }
+        String name = normalizeName(productDTO.getName());
+        validateForCreate(name, productDTO.getQtd());
 
         Product product = productMapper.toEntity(productDTO);
-
+        product.setName(name); // Usa a variável sanitizada
         product.setCategories(categoryService.returnCategory(productDTO.getCategoryId(), getCurrentUser()));
         product.setUser(getCurrentUser());
 
-        return ProductMapper.INSTANCE.toDTO(productRepository.save(product));
+        return productMapper.toDTO(productRepository.save(product));
     }
 
+    @Transactional
     public ProductDTO update(Long id, ProductDTO productDTO) {
-        log.info("Atualizando id: {} no banco de dados", id);
-        Product product = returnProductWithId(id, getCurrentUser());
+        log.info("Atualizando id: {}", id);
+        Product product = returnProduct(id, getCurrentUser());
 
-        validateProduct(productDTO.getName(), productDTO.getQtd() ,productDTO.getCategoryId());
+        String name = normalizeName(productDTO.getName());
+        validateForUpdate(id, name, productDTO.getQtd());
 
-        updateProductDTO(product, productDTO);
+        product.setName(name); // Usa a variável sanitizada
+        product.setQtd(productDTO.getQtd());
+        product.setCategories(categoryService.returnCategory(productDTO.getCategoryId(), getCurrentUser()));
 
-        return ProductMapper.INSTANCE.toDTO(productRepository.save(product));
+        return productMapper.toDTO(productRepository.save(product));
     }
 
-    public String delete(Long id) {
-        log.info("Deletando id: {} do banco de dados", id);
-        if (!productRepository.existsByIdAndUser(id, getCurrentUser())){
-            log.error("Produto não encontrado com o id: {}",id);
-            throw new NotFoundException("Produto com o id " + id + " não encontrado");
-        }
-
+    @Transactional
+    public void delete(Long id) {
+        log.info("Deletando id: {}", id);
+        returnProduct(id, getCurrentUser());
         productRepository.deleteById(id);
-        return "Produto com id " + id + " deletado com sucesso";
     }
 
+    @Transactional(readOnly = true)
     public SummaryProductDTO summaryProduct(){
         log.info("Contabilizando dados dos produtos");
 
@@ -88,26 +96,19 @@ public class ProductService {
         return new SummaryProductDTO(total.size(), lowStock.size(), noStock.size());
     }
 
-    public List<ProductDTO> findAll() {
-        List<Product> productList = productRepository.findAllByUserOrderByIdAsc(getCurrentUser());
-
-        return ProductMapper.INSTANCE.toDTOList(productList);
-    }
-
-
-
+    @Transactional(readOnly = true)
     public List<ProductDTO> lowStockProductFilter(){
         List<Product> lowStockProducts = productRepository.countLowStockProductsOrderByIdAsc(getCurrentUser(), LOW_STOCK_THRESHOLD);
 
         return ProductMapper.INSTANCE.toDTOList(lowStockProducts);
     }
 
+    @Transactional(readOnly = true)
     public List<ProductDTO> noStockProductFilter(){
         List<Product> noStockProducts = productRepository.countOutOfStockProductsOrderByIdAsc(getCurrentUser());
 
         return ProductMapper.INSTANCE.toDTOList(noStockProducts);
     }
-
 
     /*
 
@@ -119,33 +120,48 @@ public class ProductService {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
-    private Product returnProductWithId(Long id, User user) {
+    private Product returnProduct(Long id, User user) {
         return productRepository.findByIdAndUser(id, user)
-                .orElseThrow(() -> new NotFoundException("Produto com o id: " + id + " não encontrado"));
+                .orElseThrow(() -> new NotFoundException("Produto com id " + id + " não encontrado"));
     }
 
-    private List<Product> returnProductWithName(String name, User user) {
-        return productRepository.findByNameContainingIgnoreCaseAndUser(name, user)
-                .orElseThrow(() -> new NotFoundException("Produto com o nome: "+ name + " não encontrado"));
+    private String normalizeName(String name) {
+        if (name == null) return "";
+        return name.trim();
     }
 
-    private void updateProductDTO(Product product, ProductDTO productDTO) {
-        product.setName(productDTO.getName());
-        product.setQtd(productDTO.getQtd());
-        product.setCategories(categoryService.returnCategory(productDTO.getCategoryId(), getCurrentUser()));
-    }
-
-    private void validateProduct(String name, Integer qtd ,Long id) {
-        if (name == null || name.isEmpty()) {
-            log.error("O nome do produto não pode ser nulo ou vazio");
-            throw new ArgumentException("O nome do produto não pode ser vazio");
+    private void validateNameNotBlank(String name) {
+        if (name == null || name.isBlank()) {
+            log.error("Nome do produto nulo ou vazio");
+            throw new ArgumentException("Nome do produto não pode ser vazio");
         }
-
-        if (qtd == null) {
-            log.error("A quantidade do produto não pode ser nula");
-            throw new ArgumentException("A quantidade do produto não pode ser nulo");
-        }
-
     }
 
+    private void validateQuantity(Integer qtd) {
+        if (qtd == null || qtd < 0) {
+            log.error("Quantidade inválida");
+            throw new ArgumentException("A quantidade do produto deve ser informada e maior ou igual a zero");
+        }
+    }
+
+    private void validateForCreate(String name, Integer qtd) {
+        validateNameNotBlank(name);
+        validateQuantity(qtd);
+
+        if (productRepository.findByNameIgnoreCaseAndUser(name, getCurrentUser()).isPresent()) {
+            log.error("Produto já existente");
+            throw new DuplicateDataException("Produto '" + name + "' já cadastrado");
+        }
+    }
+
+    private void validateForUpdate(Long id, String name, Integer qtd) {
+        validateNameNotBlank(name);
+        validateQuantity(qtd);
+
+        var existing = productRepository.findByNameIgnoreCaseAndUser(name, getCurrentUser());
+        if (existing.isPresent() && !existing.get().getId().equals(id)) {
+            log.error("Conflito de nome na atualização");
+            throw new DuplicateDataException("Produto '" + name + "' já cadastrado em outro ID");
+        }
+    }
 }

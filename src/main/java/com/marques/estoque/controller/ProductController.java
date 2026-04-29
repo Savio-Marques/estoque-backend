@@ -78,13 +78,14 @@ public class ProductController {
 
     @Operation(summary = "Exclusão de produto do usuário logado")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Produto deletado com sucesso"),
+            @ApiResponse(responseCode = "204", description = "Produto deletado com sucesso"),
             @ApiResponse(responseCode = "403", description = "Acesso negado"),
             @ApiResponse(responseCode = "404", description = "Produto não encontrado")
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<String> delete(@Parameter(description = "ID do produto a ser buscado") @PathVariable(name = "id") Long id) {
-        return ResponseEntity.ok().body(productService.delete(id));
+        productService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Sumário de produtos")

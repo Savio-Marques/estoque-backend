@@ -86,7 +86,7 @@ public class CategoryController {
 
     @Operation(summary = "Exclusão de uma categoria")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Categoria deletada com sucesso"),
+            @ApiResponse(responseCode = "204", description = "Categoria deletada com sucesso"),
             @ApiResponse(responseCode = "403", description = "Acesso negado"),
             @ApiResponse(responseCode = "404", description = "Categoria não encontrada")
     })

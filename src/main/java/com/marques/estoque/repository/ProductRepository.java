@@ -17,11 +17,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Optional<Product> findByIdAndUser(Long id, User user);
 
-    Optional<List<Product>> findByNameContainingIgnoreCaseAndUser(String name, User user);
+    List<Product> findByNameContainingIgnoreCaseAndUser(String name, User user);
 
-    boolean existsByNameAndUser(String name, User user);
-
-    boolean existsByIdAndUser(Long id, User user);
+    Optional<Product> findByNameIgnoreCaseAndUser(String name, User user);
 
     @Query("SELECT p FROM Product p WHERE p.user = :user")
     List<Product> countTotalProducts(@Param("user") User user);
