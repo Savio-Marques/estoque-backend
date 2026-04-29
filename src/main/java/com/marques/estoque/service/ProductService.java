@@ -126,7 +126,7 @@ public class ProductService {
     }
 
     private String normalizeName(String name) {
-        if (name == null) return "";
+        if (name == null) return null;
         return name.trim();
     }
 

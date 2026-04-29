@@ -20,8 +20,6 @@ public interface DebtorRepository extends JpaRepository<Debtor, Long> {
 
     Optional<Debtor> findByNameIgnoreCaseAndUser(String name, User user);
 
-    boolean existsByIdAndUser(Long id, User user);
-
     @Query("SELECT SUM(d.value) FROM Debtor d WHERE d.user = :user")
     BigDecimal sumTotalValueByUser(@Param("user") User user);
 

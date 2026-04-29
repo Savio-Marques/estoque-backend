@@ -92,13 +92,14 @@ public class DebtorController {
 
     @Operation(summary = "Exclusão de devedor do usuário logado")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Devedor deletado com sucesso"),
+            @ApiResponse(responseCode = "204", description = "Devedor deletado com sucesso"),
             @ApiResponse(responseCode = "403", description = "Acesso negado"),
             @ApiResponse(responseCode = "404", description = "Devedor não encontrado")
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@Parameter(description = "ID do devedor a ser buscado") @PathVariable(name = "id") Long id) {
-        return ResponseEntity.ok().body(debtorService.delete(id));
+    public ResponseEntity<Void> delete(@Parameter(description = "ID do devedor a ser buscado") @PathVariable(name = "id") Long id) {
+        debtorService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Sumário de devedores")
