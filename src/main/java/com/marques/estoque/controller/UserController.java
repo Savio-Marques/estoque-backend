@@ -50,13 +50,14 @@ public class UserController {
 
     @Operation(summary = "Exclusão de usuário selecionado")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Usuário deletado com sucesso"),
+            @ApiResponse(responseCode = "204", description = "Usuário deletado com sucesso"),
             @ApiResponse(responseCode = "403", description = "Acesso negado"),
             @ApiResponse(responseCode = "404", description = "Nenhum usuário encontrado")
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@Parameter(description = "ID do usuário a ser buscado") @PathVariable(name = "id") Long id) {
-        return ResponseEntity.ok().body(userService.delete(id));
+    public ResponseEntity<Void> delete(@Parameter(description = "ID do usuário a ser buscado") @PathVariable(name = "id") Long id) {
+        userService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
 }
