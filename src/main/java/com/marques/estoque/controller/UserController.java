@@ -1,6 +1,5 @@
 package com.marques.estoque.controller;
 
-import com.marques.estoque.dto.ProductDTO;
 import com.marques.estoque.dto.UserCreateDTO;
 import com.marques.estoque.dto.UserResponseDTO;
 import com.marques.estoque.service.UserService;
@@ -10,7 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,10 +18,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/users")
 @Tag(name = "Usuários", description = "Operações para gerenciar usuários")
+@RequiredArgsConstructor
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
 
     @Operation(summary = "Retorna uma lista de todos os usuários")

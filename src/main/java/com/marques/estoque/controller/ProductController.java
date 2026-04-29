@@ -10,8 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -21,11 +20,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/product")
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Tag(name = "Produtos", description = "Operações para gerenciar produtos e estoque")
 public class ProductController {
 
-    @Autowired
     private final ProductService productService;
 
     @Operation(summary = "Busca um produto por ID")

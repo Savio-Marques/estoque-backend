@@ -9,8 +9,8 @@ import com.marques.estoque.model.Debtor;
 import com.marques.estoque.model.user.User;
 import com.marques.estoque.repository.DebtorRepository;
 import com.marques.estoque.util.DebtorMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -22,10 +22,10 @@ import java.util.Optional;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class DebtorService {
 
-    @Autowired
-    private DebtorRepository debtorRepository;
+    private final DebtorRepository debtorRepository;
 
     public DebtorDTO findById(Long id) {
         log.info("Buscando devedor por id para o usuário logado");

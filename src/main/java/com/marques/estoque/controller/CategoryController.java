@@ -8,8 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -19,11 +18,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/category")
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Tag(name = "Categorias", description = "Operações para gerenciar categorias de produtos")
 public class CategoryController {
 
-    @Autowired
     private final CategoryService categoryService;
 
     @Operation(summary = "Busca uma categoria por ID")
@@ -93,7 +91,8 @@ public class CategoryController {
             @ApiResponse(responseCode = "404", description = "Categoria não encontrada")
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@Parameter(description = "ID da categoria a ser deletada") @PathVariable(name = "id") Long id) {
-        return ResponseEntity.ok().body(categoryService.delete(id));
+    public ResponseEntity<Void> delete(@Parameter(description = "ID da categoria a ser deletada") @PathVariable(name = "id") Long id) {
+        categoryService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

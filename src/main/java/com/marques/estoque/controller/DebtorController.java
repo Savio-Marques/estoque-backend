@@ -11,8 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -22,11 +21,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/debtor")
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Tag(name = "Devedores", description = "Operações para gerenciar devedores")
 public class DebtorController {
 
-    @Autowired
     private final DebtorService debtorService;
 
     @Operation(summary = "Busca um devedor por ID")
