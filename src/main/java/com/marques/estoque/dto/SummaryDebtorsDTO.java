@@ -10,5 +10,5 @@ import java.math.BigDecimal;
 @Getter@Setter
 public class SummaryDebtorsDTO {
     private BigDecimal totalValue;
-    private Integer totalDebtors;
+    private Long totalDebtors;
 }

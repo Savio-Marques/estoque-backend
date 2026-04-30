@@ -45,20 +45,8 @@ public class DebtorController {
             @ApiResponse(responseCode = "403", description = "Acesso negado")
     })
     @GetMapping
-    public ResponseEntity<List<DebtorDTO>> findByAll() {
+    public ResponseEntity<List<DebtorDTO>> findAll() {
         return ResponseEntity.ok().body(debtorService.findAll());
-    }
-
-    @Operation(summary = "Lista todos os devedores do usuário logado")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Lista de devedores retornada com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Nenhum devedor encontrado"),
-            @ApiResponse(responseCode = "403", description = "Acesso negado")
-    })
-    @GetMapping("/pesquisar")
-    public ResponseEntity<DebtorsPageDTO> findDebtors(@RequestParam(required = false) String name) {
-        DebtorsPageDTO pageData = debtorService.findDebtorsWithFilters(name);
-        return ResponseEntity.ok(pageData);
     }
 
     @Operation(summary = "Cadastro de devedor do usuário logado")

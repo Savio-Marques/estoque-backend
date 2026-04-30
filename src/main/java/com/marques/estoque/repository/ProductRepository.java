@@ -2,6 +2,7 @@ package com.marques.estoque.repository;
 
 import com.marques.estoque.model.product.Product;
 import com.marques.estoque.model.user.User;
+import com.marques.estoque.repository.projection.ProductSummaryProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

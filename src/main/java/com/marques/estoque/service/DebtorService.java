@@ -8,6 +8,7 @@ import com.marques.estoque.exception.NotFoundException;
 import com.marques.estoque.model.Debtor;
 import com.marques.estoque.model.user.User;
 import com.marques.estoque.repository.DebtorRepository;
+import com.marques.estoque.repository.projection.DebtorSummaryProjection;
 import com.marques.estoque.util.DebtorMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -87,39 +88,15 @@ public class DebtorService {
     }
 
     @Transactional(readOnly = true)
-    public SummaryDebtorsDTO summaryDebtors(){
-        log.info("Contando quantidade e total de valores dos devedores");
+    public SummaryDebtorsDTO summaryDebtors() {
+        log.info("Processando sumário de devedores");
 
-        BigDecimal totalValue = Optional.ofNullable(debtorRepository.sumTotalValueByUser(getCurrentUser()))
-                .orElse(BigDecimal.ZERO);
-        Integer totalDebtors = debtorRepository.countTotalDebtorsByUser(getCurrentUser());
+        DebtorSummaryProjection projection = debtorRepository.getDebtorSummary(getCurrentUser());
 
-        return new SummaryDebtorsDTO(totalValue, totalDebtors);
-    }
-
-    @Transactional(readOnly = true)
-    public DebtorsPageDTO findDebtorsWithFilters(String clientName) {
-        User currentUser = getCurrentUser();
-
-        List<Debtor> filteredDebtors;
-
-        boolean hasNameFilter = clientName != null && !clientName.trim().isEmpty();
-
-        if (hasNameFilter) {
-            filteredDebtors = debtorRepository.findByUserAndNameContainingIgnoreCase(currentUser, clientName);
-        } else {
-            filteredDebtors = debtorRepository.findAllByUser(currentUser);
-        }
-
-        Integer totalDebtors = filteredDebtors.size();
-        BigDecimal totalValue = filteredDebtors.stream()
-                .map(Debtor::getValue)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        SummaryDebtorsDTO summary = new SummaryDebtorsDTO(totalValue, totalDebtors);
-        List<DebtorDTO> debtorDTOs = debtorMapper.toDTOList(filteredDebtors);
-
-        return new DebtorsPageDTO(debtorDTOs, summary);
+        return new SummaryDebtorsDTO(
+                projection.getTotalValue(),
+                projection.getTotalDebtors()
+        );
     }
 
     /*

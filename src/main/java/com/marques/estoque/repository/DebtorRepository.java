@@ -2,6 +2,7 @@ package com.marques.estoque.repository;
 
 import com.marques.estoque.model.Debtor;
 import com.marques.estoque.model.user.User;
+import com.marques.estoque.repository.projection.DebtorSummaryProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,14 +21,12 @@ public interface DebtorRepository extends JpaRepository<Debtor, Long> {
 
     Optional<Debtor> findByNameIgnoreCaseAndUser(String name, User user);
 
-    @Query("SELECT SUM(d.value) FROM Debtor d WHERE d.user = :user")
-    BigDecimal sumTotalValueByUser(@Param("user") User user);
-
-    @Query("SELECT COUNT(d) FROM Debtor d WHERE d.user = :user")
-    Integer countTotalDebtorsByUser(@Param("user") User user);
+    @Query("SELECT " +
+            "COUNT(d.id) AS totalDebtors, " +
+            "COALESCE(SUM(d.value), 0) AS totalValue " +
+            "FROM Debtor d WHERE d.user = :user")
+    DebtorSummaryProjection getDebtorSummary(@Param("user") User user);
 
     List<Debtor> findByUserAndNameContainingIgnoreCase(User user, String clientName);
-
-
 
 }

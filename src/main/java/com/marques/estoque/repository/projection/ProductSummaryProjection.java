@@ -1,4 +1,4 @@
-package com.marques.estoque.repository;
+package com.marques.estoque.repository.projection;
 
 public interface ProductSummaryProjection {
     Long getTotal();

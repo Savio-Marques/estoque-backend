@@ -8,7 +8,7 @@ import com.marques.estoque.exception.NotFoundException;
 import com.marques.estoque.model.product.Product;
 import com.marques.estoque.model.user.User;
 import com.marques.estoque.repository.ProductRepository;
-import com.marques.estoque.repository.ProductSummaryProjection;
+import com.marques.estoque.repository.projection.ProductSummaryProjection;
 import com.marques.estoque.util.ProductMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
