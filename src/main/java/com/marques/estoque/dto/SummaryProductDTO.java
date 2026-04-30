@@ -8,8 +8,8 @@ import lombok.Setter;
 @Getter @Setter
 public class SummaryProductDTO {
 
-    private Integer totalProduct;
-    private Integer lowStock;
-    private Integer noStock;
+    private Long totalProduct;
+    private Long lowStock;
+    private Long noStock;
 
 }

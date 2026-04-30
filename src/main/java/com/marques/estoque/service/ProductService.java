@@ -8,6 +8,7 @@ import com.marques.estoque.exception.NotFoundException;
 import com.marques.estoque.model.product.Product;
 import com.marques.estoque.model.user.User;
 import com.marques.estoque.repository.ProductRepository;
+import com.marques.estoque.repository.ProductSummaryProjection;
 import com.marques.estoque.util.ProductMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -86,28 +87,16 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public SummaryProductDTO summaryProduct(){
-        log.info("Contabilizando dados dos produtos");
+    public SummaryProductDTO summaryProduct() {
+        log.info("Processando sumário de produtos");
 
-        List<Product> total = productRepository.countTotalProducts(getCurrentUser());
-        List<Product> lowStock = productRepository.countLowStockProductsOrderByIdAsc(getCurrentUser(), LOW_STOCK_THRESHOLD);
-        List<Product> noStock = productRepository.countOutOfStockProductsOrderByIdAsc(getCurrentUser());
+        ProductSummaryProjection projection = productRepository.getProductSummary(getCurrentUser(), LOW_STOCK_THRESHOLD);
 
-        return new SummaryProductDTO(total.size(), lowStock.size(), noStock.size());
-    }
-
-    @Transactional(readOnly = true)
-    public List<ProductDTO> lowStockProductFilter(){
-        List<Product> lowStockProducts = productRepository.countLowStockProductsOrderByIdAsc(getCurrentUser(), LOW_STOCK_THRESHOLD);
-
-        return productMapper.toDTOList(lowStockProducts);
-    }
-
-    @Transactional(readOnly = true)
-    public List<ProductDTO> noStockProductFilter(){
-        List<Product> noStockProducts = productRepository.countOutOfStockProductsOrderByIdAsc(getCurrentUser());
-
-        return productMapper.toDTOList(noStockProducts);
+        return new SummaryProductDTO(
+                projection.getTotal(),
+                projection.getLowStock(),
+                projection.getNoStock()
+        );
     }
 
     /*

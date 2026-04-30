@@ -14,8 +14,6 @@ import java.util.stream.Collectors;
 @Mapper(componentModel = "spring")
 public interface CategoryMapper {
 
-    CategoryMapper INSTANCE = Mappers.getMapper(CategoryMapper.class);
-
     @Mapping(target = "products", ignore = true)
     CategoryDTO toDTO(Category category);
 

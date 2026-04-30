@@ -10,8 +10,6 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface DebtorMapper {
 
-    DebtorMapper INSTANCE = Mappers.getMapper(DebtorMapper.class);
-
     Debtor toDebtor(DebtorDTO debtorDTO);
 
     DebtorDTO toDTO(Debtor debtor);

@@ -88,17 +88,6 @@ public class ProductController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "Sumário de produtos")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Produto retornado com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Nenhum produto encontrado"),
-            @ApiResponse(responseCode = "403", description = "Acesso negado")
-    })
-    @GetMapping("/summary")
-    public ResponseEntity<SummaryProductDTO> summaryProducts() {
-        return ResponseEntity.ok().body(productService.summaryProduct());
-    }
-
     @Operation(summary = "Lista todos os produtos do usuário logado com ou sem filtros")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista de produtos retornada com sucesso"),
@@ -111,28 +100,14 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
-    @Operation(summary = "Lista todos os produtos com baixo estoque do usuário logado")
+    @Operation(summary = "Sumário de produtos")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Lista de produtos retornada com sucesso"),
+            @ApiResponse(responseCode = "200", description = "Produto retornado com sucesso"),
             @ApiResponse(responseCode = "404", description = "Nenhum produto encontrado"),
             @ApiResponse(responseCode = "403", description = "Acesso negado")
     })
-    @GetMapping("/lowStock")
-    public ResponseEntity<List<ProductDTO>> lowStockProductsFilter() {
-        List<ProductDTO> products = productService.lowStockProductFilter();
-        return ResponseEntity.ok(products);
+    @GetMapping("/summary")
+    public ResponseEntity<SummaryProductDTO> summaryProducts() {
+        return ResponseEntity.ok().body(productService.summaryProduct());
     }
-
-    @Operation(summary = "Lista todos os produtos sem estoque do usuário logado")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Lista de produtos retornada com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Nenhum produto encontrado"),
-            @ApiResponse(responseCode = "403", description = "Acesso negado")
-    })
-    @GetMapping("/noStock")
-    public ResponseEntity<List<ProductDTO>> noStockProductsFilter() {
-        List<ProductDTO> products = productService.noStockProductFilter();
-        return ResponseEntity.ok(products);
-    }
-
 }

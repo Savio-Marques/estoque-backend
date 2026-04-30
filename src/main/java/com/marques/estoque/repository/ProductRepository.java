@@ -21,12 +21,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Optional<Product> findByNameIgnoreCaseAndUser(String name, User user);
 
-    @Query("SELECT p FROM Product p WHERE p.user = :user")
-    List<Product> countTotalProducts(@Param("user") User user);
-
-    @Query("SELECT p FROM Product p WHERE p.user = :user AND p.qtd = 0")
-    List<Product> countOutOfStockProductsOrderByIdAsc(@Param("user") User user);
-
-    @Query("SELECT p FROM Product p WHERE p.user = :user AND p.qtd > 0 AND p.qtd <= :threshold")
-    List<Product> countLowStockProductsOrderByIdAsc(@Param("user") User user, @Param("threshold") int threshold);
+    @Query("SELECT " +
+            "COUNT(p.id) AS total, " +
+            "COALESCE(SUM(CASE WHEN p.qtd > 0 AND p.qtd <= :threshold THEN 1L ELSE 0L END), 0L) AS lowStock, " +
+            "COALESCE(SUM(CASE WHEN p.qtd = 0 THEN 1L ELSE 0L END), 0L) AS noStock " +
+            "FROM Product p WHERE p.user = :user")
+    ProductSummaryProjection getProductSummary(@Param("user") User user, @Param("threshold") int threshold);
 }
