@@ -6,7 +6,6 @@ import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-import org.mapstruct.factory.Mappers;
 
 import java.util.List;
 
@@ -21,20 +20,7 @@ public interface ProductMapper {
 
     @Mapping(target = "categories", ignore = true)
     @Mapping(target = "user", ignore = true)
+    @Mapping(target = "status", ignore = true)
     Product toEntity(ProductDTO productDTO);
 
-    @AfterMapping
-    default void calculateStatus(@MappingTarget ProductDTO dto, Product product) {
-        if (product == null) {
-            return;
-        }
-
-        if (product.getQtd() == 0) {
-            dto.setStatus("Sem Estoque");
-        } else if (product.getQtd() <= 5) {
-            dto.setStatus("Estoque Baixo");
-        } else {
-            dto.setStatus("Disponível");
-        }
-    }
 }

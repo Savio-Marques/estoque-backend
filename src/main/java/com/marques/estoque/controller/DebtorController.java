@@ -2,7 +2,6 @@ package com.marques.estoque.controller;
 
 
 import com.marques.estoque.dto.DebtorDTO;
-import com.marques.estoque.dto.DebtorsPageDTO;
 import com.marques.estoque.dto.SummaryDebtorsDTO;
 import com.marques.estoque.service.DebtorService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,7 +40,6 @@ public class DebtorController {
     @Operation(summary = "Busca todos os devedores")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Devedor retornado com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Nenhum devedor encontrado"),
             @ApiResponse(responseCode = "403", description = "Acesso negado")
     })
     @GetMapping
@@ -59,7 +57,7 @@ public class DebtorController {
     public ResponseEntity<DebtorDTO> save(@Valid @RequestBody DebtorDTO debtorDTO, UriComponentsBuilder uriComponentsBuilder) {
         DebtorDTO debtor = debtorService.save(debtorDTO);
 
-        URI uri = uriComponentsBuilder.path("/product/{id}").buildAndExpand(debtor.getId()).toUri();
+        URI uri = uriComponentsBuilder.path("/debtor/{id}").buildAndExpand(debtor.getId()).toUri();
 
         return ResponseEntity.created(uri).body(debtor);
     }
@@ -93,7 +91,6 @@ public class DebtorController {
     @Operation(summary = "Sumário de devedores")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Sumário retornado com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Nenhum valor encontrado"),
             @ApiResponse(responseCode = "403", description = "Acesso negado")
     })
     @GetMapping("/summary")

@@ -1,7 +1,6 @@
 package com.marques.estoque.service;
 
 import com.marques.estoque.dto.DebtorDTO;
-import com.marques.estoque.dto.DebtorsPageDTO;
 import com.marques.estoque.dto.SummaryDebtorsDTO;
 import com.marques.estoque.exception.ArgumentException;
 import com.marques.estoque.exception.NotFoundException;
@@ -20,7 +19,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Slf4j
@@ -34,12 +32,6 @@ public class DebtorService {
     public DebtorDTO findById(Long id) {
         log.info("Buscando devedor por id para o usuário logado");
         return debtorMapper.toDTO(returnDebtorWithId(id, getCurrentUser()));
-    }
-
-    @Transactional(readOnly = true)
-    public DebtorDTO findByName(String name) {
-        log.info("Buscando devedor por nome para o usuário logado");
-        return debtorMapper.toDTO(returnDebtorWithName(name, getCurrentUser()));
     }
 
     @Transactional(readOnly = true)

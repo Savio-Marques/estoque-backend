@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,7 +25,5 @@ public interface DebtorRepository extends JpaRepository<Debtor, Long> {
             "COALESCE(SUM(d.value), 0) AS totalValue " +
             "FROM Debtor d WHERE d.user = :user")
     DebtorSummaryProjection getDebtorSummary(@Param("user") User user);
-
-    List<Debtor> findByUserAndNameContainingIgnoreCase(User user, String clientName);
 
 }

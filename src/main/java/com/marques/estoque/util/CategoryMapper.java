@@ -1,15 +1,11 @@
 package com.marques.estoque.util;
 
 import com.marques.estoque.dto.CategoryDTO;
-import com.marques.estoque.dto.ProductDTO;
 import com.marques.estoque.model.product.Category;
-import com.marques.estoque.model.product.Product;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.factory.Mappers;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring")
 public interface CategoryMapper {

@@ -32,7 +32,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(GeneralException.class)
-    private ResponseEntity<StandardError> argumentExceptionHandler (GeneralException exception) {
+    private ResponseEntity<StandardError> GeneralException (GeneralException exception) {
         String message = exception.getMessage();
         HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
         StandardError err = new StandardError(status, message, Instant.now());

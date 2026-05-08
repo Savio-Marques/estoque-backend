@@ -40,4 +40,16 @@ public class Product {
     @JoinColumn(name = "category_id")
     @NotNull(message = "O produto precisa pertencer a uma categoria.")
     private Category categories;
+
+    public static final int LOW_STOCK_THRESHOLD = 5;
+
+    public String getStatus() {
+        if (this.qtd == 0) {
+            return "Sem Estoque";
+        } else if (this.qtd <= LOW_STOCK_THRESHOLD) {
+            return "Estoque Baixo";
+        } else {
+            return "Disponível";
+        }
+    }
 }

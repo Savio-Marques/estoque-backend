@@ -83,7 +83,7 @@ public class ProductController {
             @ApiResponse(responseCode = "404", description = "Produto não encontrado")
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@Parameter(description = "ID do produto a ser buscado") @PathVariable(name = "id") Long id) {
+    public ResponseEntity<Void> delete(@Parameter(description = "ID do produto a ser buscado") @PathVariable(name = "id") Long id) {
         productService.delete(id);
         return ResponseEntity.noContent().build();
     }
@@ -91,7 +91,6 @@ public class ProductController {
     @Operation(summary = "Lista todos os produtos do usuário logado com ou sem filtros")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista de produtos retornada com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Nenhum produto encontrado"),
             @ApiResponse(responseCode = "403", description = "Acesso negado")
     })
     @GetMapping
@@ -103,7 +102,6 @@ public class ProductController {
     @Operation(summary = "Sumário de produtos")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Produto retornado com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Nenhum produto encontrado"),
             @ApiResponse(responseCode = "403", description = "Acesso negado")
     })
     @GetMapping("/summary")

@@ -27,8 +27,6 @@ public class ProductService {
     private final CategoryService categoryService;
     private final ProductMapper productMapper;
 
-    private static final int LOW_STOCK_THRESHOLD = 5;
-
     @Transactional(readOnly = true)
     public ProductDTO findById(Long id) {
         log.info("Buscando produto por id");
@@ -90,7 +88,7 @@ public class ProductService {
     public SummaryProductDTO summaryProduct() {
         log.info("Processando sumário de produtos");
 
-        ProductSummaryProjection projection = productRepository.getProductSummary(getCurrentUser(), LOW_STOCK_THRESHOLD);
+        ProductSummaryProjection projection = productRepository.getProductSummary(getCurrentUser(), Product.LOW_STOCK_THRESHOLD);
 
         return new SummaryProductDTO(
                 projection.getTotal(),
