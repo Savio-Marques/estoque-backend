@@ -28,7 +28,6 @@ public class SecurityConfigurations {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/users/**").hasRole("ADMIN")
-                        .requestMatchers("/health").permitAll()
                         .requestMatchers("/product/**").hasRole("USER")
                         .requestMatchers("/category/**").hasRole("USER")
                         .requestMatchers("/debtor/**").hasRole("USER")
