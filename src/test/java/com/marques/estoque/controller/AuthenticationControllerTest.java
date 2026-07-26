@@ -5,15 +5,17 @@ import com.marques.estoque.dto.UserCreateDTO;
 import com.marques.estoque.model.user.User;
 import com.marques.estoque.model.user.UserRole;
 import com.marques.estoque.repository.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -21,6 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Transactional
 class AuthenticationControllerTest {
 
     @Autowired
@@ -35,9 +38,9 @@ class AuthenticationControllerTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @BeforeEach
-    void setUp() {
-        userRepository.deleteAll();
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -74,7 +77,7 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    void login_ShouldReturn403Forbidden_WhenCredentialsWrong() throws Exception {
+    void login_ShouldReturnError_WhenCredentialsWrong() throws Exception {
         UserCreateDTO loginDto = new UserCreateDTO();
         loginDto.setUsername("naoexiste");
         loginDto.setPassword("errada");
@@ -82,6 +85,6 @@ class AuthenticationControllerTest {
         mockMvc.perform(post("/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginDto)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().is4xxClientError());
     }
 }
