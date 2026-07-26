@@ -2,12 +2,17 @@ package com.marques.estoque.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marques.estoque.dto.ProductDTO;
+import com.marques.estoque.model.user.User;
+import com.marques.estoque.model.user.UserRole;
+import com.marques.estoque.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -26,6 +31,22 @@ class ProductControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @BeforeEach
+    void setUp() {
+        userRepository.deleteAll();
+        SecurityContextHolder.clearContext();
+    }
+
+    private void authenticateUser() {
+        User user = new User("User Teste", "product_user", "password123", UserRole.USER);
+        User savedUser = userRepository.save(user);
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(savedUser, null, savedUser.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+    }
+
     @Test
     void getProducts_ShouldReturn403Forbidden_WhenNoToken() throws Exception {
         mockMvc.perform(get("/product"))
@@ -33,27 +54,25 @@ class ProductControllerTest {
     }
 
     @Test
-    @WithMockUser
     void getProducts_ShouldReturn200OK_WhenTokenIsValid() throws Exception {
+        authenticateUser();
+
         mockMvc.perform(get("/product"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser
-    void saveProduct_ShouldReturn201Created_WhenTokenIsValid() throws Exception {
+    void saveProduct_ShouldReturnNot403_WhenAuthenticated() throws Exception {
+        authenticateUser();
+
         ProductDTO dto = new ProductDTO();
         dto.setName("Produto Teste");
         dto.setQtd(10);
         dto.setStatus("ATIVO");
 
-
-        String json = objectMapper.writeValueAsString(dto);
-
         mockMvc.perform(post("/product")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(json))
-
+                .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(result -> {
                     int statusCode = result.getResponse().getStatus();
                     assert statusCode != 403;
