@@ -37,7 +37,7 @@ class CategoryControllerTest {
     private void authenticateUser() {
         User user = new User("User Teste", "cat_user", "password123", UserRole.USER);
         User savedUser = userRepository.save(user);
-        UsernamePasswordAuthenticatiognToken auth = new UsernamePasswordAuthenticationToken(savedUser, null, savedUser.getAuthorities());
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(savedUser, null, savedUser.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
 
