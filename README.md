@@ -31,7 +31,7 @@ Este projeto foi desenvolvido utilizando as seguintes tecnologias:
 
 ### Backend
 
-* **Java 17+**
+* **Java 17**
 * **Spring Boot 3** - Framework principal para a construção da aplicação.
 * **Spring Security** - Para a implementação da autenticação e autorização.
 * **JSON Web Token (JWT)** - Para a geração de tokens de acesso seguros.
