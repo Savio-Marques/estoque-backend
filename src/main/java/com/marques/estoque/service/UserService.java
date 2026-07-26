@@ -8,9 +8,8 @@ import com.marques.estoque.repository.UserRepository;
 import com.marques.estoque.util.UserMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,6 +20,9 @@ public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public List<UserResponseDTO> findAll() {
         List<User> userList = userRepository.findAll();
@@ -41,7 +43,7 @@ public class UserService {
         user.setUsername(userCreateDTO.getUsername());
 
         if(userCreateDTO.getPassword() != null && !userCreateDTO.getPassword().trim().isEmpty()) {
-            String encryptedPassword = new BCryptPasswordEncoder().encode(userCreateDTO.getPassword());
+            String encryptedPassword = passwordEncoder.encode(userCreateDTO.getPassword());
             user.setPassword(encryptedPassword);
         }
 

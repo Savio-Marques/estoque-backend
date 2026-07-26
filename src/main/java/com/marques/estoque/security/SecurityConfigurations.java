@@ -20,8 +20,6 @@ public class SecurityConfigurations {
     @Autowired
     SecurityFilter securityFilter;
 
-    @Autowired
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception{
         return httpSecurity
@@ -29,7 +27,7 @@ public class SecurityConfigurations {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/users/**").permitAll()
+                        .requestMatchers("/users/**").hasRole("ADMIN")
                         .requestMatchers("/health").permitAll()
                         .requestMatchers("/product/**").hasRole("USER")
                         .requestMatchers("/category/**").hasRole("USER")

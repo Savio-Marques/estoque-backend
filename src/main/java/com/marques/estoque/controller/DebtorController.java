@@ -73,7 +73,7 @@ public class DebtorController {
     public ResponseEntity<DebtorDTO> save(@Valid @RequestBody DebtorDTO debtorDTO, UriComponentsBuilder uriComponentsBuilder) {
         DebtorDTO debtor = debtorService.save(debtorDTO);
 
-        URI uri = uriComponentsBuilder.path("/product/{id}").buildAndExpand(debtor.getId()).toUri();
+        URI uri = uriComponentsBuilder.path("/debtor/{id}").buildAndExpand(debtor.getId()).toUri();
 
         return ResponseEntity.created(uri).body(debtor);
     }

@@ -4,6 +4,7 @@ import com.marques.estoque.dto.LoginResponseDTO;
 import com.marques.estoque.dto.UserCreateDTO;
 import com.marques.estoque.exception.DuplicateDataException;
 import com.marques.estoque.model.user.User;
+import com.marques.estoque.model.user.UserRole;
 import com.marques.estoque.repository.UserRepository;
 import com.marques.estoque.security.TokenService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -63,7 +64,8 @@ public class AuthenticationController {
         if(this.userRepository.findByUsername(userCreateDTO.getUsername()) != null) throw new DuplicateDataException("Nome de usuário já cadastrado.");
 
         String encryptedPassword = passwordEncoder.encode(userCreateDTO.getPassword());
-        User newUser = new User(userCreateDTO.getName() ,userCreateDTO.getUsername(), encryptedPassword, userCreateDTO.getRole());
+        // C2: Força o role USER para evitar que qualquer pessoa se registre como ADMIN
+        User newUser = new User(userCreateDTO.getName() ,userCreateDTO.getUsername(), encryptedPassword, UserRole.USER);
 
         this.userRepository.save(newUser);
 
