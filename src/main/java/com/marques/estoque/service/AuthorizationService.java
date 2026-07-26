@@ -19,7 +19,7 @@ public class AuthorizationService implements UserDetailsService {
 
         UserDetails user= userRepository.findByUsername(username);
 
-        if (user == null) throw new NotFoundException("Nome de usuário não encotrado.");
+        if (user == null) throw new NotFoundException("Nome de usuário não encontrado.");
 
         return user;
     }

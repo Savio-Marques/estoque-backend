@@ -27,9 +27,6 @@ public class ProductService {
     private CategoryService categoryService;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
     private ProductMapper productMapper;
 
     private static final int LOW_STOCK_THRESHOLD = 5;
@@ -47,7 +44,7 @@ public class ProductService {
     public ProductDTO save(ProductDTO productDTO) {
         log.info("Salvando produto no banco de dados para o usuário logado");
 
-        validateProduct(productDTO.getName(), productDTO.getQtd() ,productDTO.getCategoryId());
+        validateProduct(productDTO.getName(), productDTO.getQtd());
 
         if (productRepository.existsByNameAndUser(productDTO.getName(), getCurrentUser())){
             throw new DuplicateDataException("Já existe um produto cadastrado com esse nome.");
@@ -65,7 +62,7 @@ public class ProductService {
         log.info("Atualizando id: {} no banco de dados", id);
         Product product = returnProductWithId(id, getCurrentUser());
 
-        validateProduct(productDTO.getName(), productDTO.getQtd() ,productDTO.getCategoryId());
+        validateProduct(productDTO.getName(), productDTO.getQtd());
 
         updateProductDTO(product, productDTO);
 
@@ -140,7 +137,7 @@ public class ProductService {
         product.setCategories(categoryService.returnCategory(productDTO.getCategoryId(), getCurrentUser()));
     }
 
-    private void validateProduct(String name, Integer qtd ,Long id) {
+    private void validateProduct(String name, Integer qtd) {
         if (name == null || name.isEmpty()) {
             log.error("O nome do produto não pode ser nulo ou vazio");
             throw new ArgumentException("O nome do produto não pode ser vazio");

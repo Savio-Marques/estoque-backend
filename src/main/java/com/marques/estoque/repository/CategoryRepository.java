@@ -1,7 +1,6 @@
 package com.marques.estoque.repository;
 
 import com.marques.estoque.model.product.Category;
-import com.marques.estoque.model.product.Product;
 import com.marques.estoque.model.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

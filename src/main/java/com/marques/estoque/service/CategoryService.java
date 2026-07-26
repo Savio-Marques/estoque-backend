@@ -72,8 +72,8 @@ public class CategoryService {
         }
 
         if (!findById(id).getProducts().isEmpty()) {
-            log.error("Categoria com um ou mais produtos registados");
-            throw new GeneralException("Não é possível excluir categorias com produtos associodados, exluir produtos primeiro.");
+            log.error("Categoria com um ou mais produtos registrados");
+            throw new GeneralException("Não é possível excluir categorias com produtos associados, excluir produtos primeiro.");
         }
 
         categoryRepository.deleteById(id);
@@ -92,7 +92,7 @@ public class CategoryService {
 
     public Category returnCategory(Long id, User user) {
         return categoryRepository.findByIdAndUser(id, user)
-                .orElseThrow(() -> new NotFoundException("Categoria com de id" + id + " não encontrada"));
+                .orElseThrow(() -> new NotFoundException("Categoria com o id " + id + " não encontrada"));
     }
 
     private Category returnProductWithName(String name, User user) {

@@ -1,6 +1,5 @@
 package com.marques.estoque.dto;
 
-import com.marques.estoque.model.user.User;
 import lombok.Getter;
 import lombok.Setter;
 

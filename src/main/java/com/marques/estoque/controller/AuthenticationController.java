@@ -45,7 +45,7 @@ public class AuthenticationController {
             @ApiResponse(responseCode = "403", description = "Acesso negado")
     })
     @PostMapping("/login")
-    public ResponseEntity login(@RequestBody @Valid UserCreateDTO userCreateDTO) {
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid UserCreateDTO userCreateDTO) {
         var userNamePassword = new UsernamePasswordAuthenticationToken(userCreateDTO.getUsername(), userCreateDTO.getPassword());
         var auth = this.authenticationManager.authenticate(userNamePassword);
 

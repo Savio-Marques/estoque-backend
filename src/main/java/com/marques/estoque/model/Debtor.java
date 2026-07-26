@@ -38,7 +38,7 @@ public class Debtor {
 
     @Column(name = "value", nullable = false)
     @NotNull(message = "O valor devido não pode ser nulo.")
-    @PositiveOrZero(message = "A quantidade não pode ser um número negativo.")
+    @PositiveOrZero(message = "O valor devido não pode ser um número negativo.")
     private BigDecimal value;
 
     @Column(name = "date")

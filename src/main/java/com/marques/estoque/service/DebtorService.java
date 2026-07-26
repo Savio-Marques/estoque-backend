@@ -44,7 +44,7 @@ public class DebtorService {
 
     public DebtorDTO save(DebtorDTO debtorDTO) {
         log.info("Criando um devedor para o usuário logado");
-        validateDebtor(debtorDTO.getName(), debtorDTO.getValue(), debtorDTO.getId());
+        validateDebtor(debtorDTO.getName(), debtorDTO.getValue());
 
         Debtor debtor =  DebtorMapper.INSTANCE.toDebtor(debtorDTO);
 
@@ -57,7 +57,7 @@ public class DebtorService {
 
     public DebtorDTO update (Long id, DebtorDTO debtorDTO) {
         log.info("Atualizando um devedor para o usuário logado");
-        validateDebtor(debtorDTO.getName(), debtorDTO.getValue(), debtorDTO.getId());
+        validateDebtor(debtorDTO.getName(), debtorDTO.getValue());
 
         Debtor debtor = returnDebtorWithId(id, getCurrentUser());
 
@@ -130,7 +130,7 @@ public class DebtorService {
 
     private Debtor returnDebtorWithName(String name, User user) {
         return debtorRepository.findByNameIgnoreCaseAndUser(name, user)
-                .orElseThrow(() -> new NotFoundException("Devedores com o id: " + name + " não encontrado"));
+                .orElseThrow(() -> new NotFoundException("Devedor com o nome: " + name + " não encontrado"));
     }
 
     private void updateDebtor(Debtor debtor, DebtorDTO debtorDTO) {
@@ -140,7 +140,7 @@ public class DebtorService {
         debtor.setUser(getCurrentUser());
     }
 
-    private void validateDebtor(String name, BigDecimal value , Long id) {
+    private void validateDebtor(String name, BigDecimal value) {
         if (name == null || name.isEmpty()) {
             log.error("O nome do devedor não pode ser nulo ou vazio");
             throw new ArgumentException("O nome do devedor não pode ser vazio");

@@ -62,8 +62,4 @@ public class UserService {
         userRepository.deleteById(id);
         return "Usuário com id " + id + " deletado com sucesso";
     }
-
-    private User getCurrentUser() {
-        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    }
 }
