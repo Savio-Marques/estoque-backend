@@ -64,7 +64,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}g
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~
             sudo docker-compose pull api
