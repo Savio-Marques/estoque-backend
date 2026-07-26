@@ -143,11 +143,11 @@ public class DebtorService {
     private void validateDebtor(String name, BigDecimal value , Long id) {
         if (name == null || name.isEmpty()) {
             log.error("O nome do devedor não pode ser nulo ou vazio");
-            throw new ArgumentException("O nome do produto não pode ser vazio");
+            throw new ArgumentException("O nome do devedor não pode ser vazio");
         }
 
         if (value == null) {
-            log.error("O valor devido não pode ser nula");
+            log.error("O valor devido não pode ser nulo");
             throw new ArgumentException("O valor devido não pode ser nulo");
         }
     }

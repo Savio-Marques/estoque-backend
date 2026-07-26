@@ -26,7 +26,6 @@ import java.util.List;
 @Tag(name = "Devedores", description = "Operações para gerenciar devedores")
 public class DebtorController {
 
-    @Autowired
     private final DebtorService debtorService;
 
     @Operation(summary = "Busca um devedor por ID")

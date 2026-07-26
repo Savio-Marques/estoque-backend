@@ -23,7 +23,6 @@ import java.util.List;
 @Tag(name = "Categorias", description = "Operações para gerenciar categorias de produtos")
 public class CategoryController {
 
-    @Autowired
     private final CategoryService categoryService;
 
     @Operation(summary = "Busca uma categoria por ID")

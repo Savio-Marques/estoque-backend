@@ -25,7 +25,6 @@ import java.util.List;
 @Tag(name = "Produtos", description = "Operações para gerenciar produtos e estoque")
 public class ProductController {
 
-    @Autowired
     private final ProductService productService;
 
     @Operation(summary = "Busca um produto por ID")
