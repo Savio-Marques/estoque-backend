@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: estoque-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-root}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-senhasecreta}
+      POSTGRES_DB: ${POSTGRES_DB:-estoque_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data 
+    networks:
+      - estoque-network
+
+  api:
+    image: saviomarques/estoque-backend:latest
+    container_name: estoque-api
+    restart: always
+    ports:
+      - "10000:10000"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${POSTGRES_DB:-estoque_db}
+      - DB_USER=${POSTGRES_USER:-root}
+      - DB_PASS=${POSTGRES_PASSWORD:-senhasecreta}
+      - JWT_SECRET=${JWT_SECRET:-chavesecreta}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      - postgres
+    networks:
+      - estoque-network
+
+volumes:
+  postgres_data:
+
+networks:
+  estoque-network:

@@ -1,0 +1,72 @@
+name: CI/CD Pipeline - Estoque Backend
+
+on:
+  push:
+    branches:
+      - docker
+
+jobs:
+  test:
+    name: Rodar Testes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do Código
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Cache das Dependências Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+
+      - name: Rodar Testes com Maven
+        run: mvn test
+        env:
+          JWT_SECRET: "secret-para-testes-ci-cd-12345678"
+
+  build-and-push:
+    name: Build e Push Docker
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout do Código
+        uses: actions/checkout@v4
+
+      - name: Login no Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build e Push da Imagem
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/estoque-backend:latest
+
+  deploy:
+    name: Deploy no EC2
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: SSH no EC2 e atualizar o container
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~
+            sudo docker-compose pull api
+            sudo docker-compose up -d --no-deps api
+            echo "Deploy concluído"
