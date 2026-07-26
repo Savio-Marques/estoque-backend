@@ -24,18 +24,18 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
 
     public CategoryDTO findById(Long id) {
-        log.info("Procurado por ID");
+        log.info("Buscando categoria id: {} para o usuário logado", id);
         return CategoryMapper.INSTANCE.toDTO(returnCategory(id, getCurrentUser()));
     }
 
     public CategoryDTO findByName(String name) {
-        log.info("Procurando por nome");
+        log.info("Buscando categoria por nome: {} para o usuário logado", name);
 
         return CategoryMapper.INSTANCE.toDTO(returnProductWithName(name, getCurrentUser()));
     }
 
     public List<CategoryDTO> findAll() {
-        log.info("Buscando todos");
+        log.info("Buscando todas as categorias para o usuário logado");
 
         List<Category> categories = categoryRepository.findAllByUserOrderByIdAsc(getCurrentUser());
 
@@ -43,7 +43,7 @@ public class CategoryService {
     }
 
     public CategoryDTO save(CategoryDTO categoryDTO) {
-        log.info("Cadastrando categoria");
+        log.info("Cadastrando nova categoria: {} para o usuário logado", categoryDTO.getName());
 
         validateAndCheckCategoryName(categoryDTO.getName());
 
@@ -55,7 +55,7 @@ public class CategoryService {
     }
 
     public CategoryDTO update (Long id, CategoryDTO categoryDTO) {
-        log.info("Atualizando a categoria: {}", id);
+        log.info("Atualizando a categoria id: {} para o usuário logado", id);
         Category category = returnCategory(id, getCurrentUser());
 
         validateAndCheckCategoryName(categoryDTO.getName());

@@ -8,11 +8,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
+@RequestMapping("/health")
 public class HealthCheckController {
 
-    @GetMapping("/health")
+    @GetMapping
     public ResponseEntity<String> healthCheck() {
-        log.info("I'm alive!");
+        log.info("Health check endpoint chamado com sucesso");
         return ResponseEntity.ok("I'm alive!");
     }
 }
