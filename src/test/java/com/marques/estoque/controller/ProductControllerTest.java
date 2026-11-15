@@ -1,6 +1,5 @@
 package com.marques.estoque.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marques.estoque.dto.ProductDTO;
 import com.marques.estoque.model.product.Category;
 import com.marques.estoque.model.product.Product;
@@ -8,60 +7,27 @@ import com.marques.estoque.model.user.User;
 import com.marques.estoque.model.user.UserRole;
 import com.marques.estoque.repository.CategoryRepository;
 import com.marques.estoque.repository.ProductRepository;
-import com.marques.estoque.repository.UserRepository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.web.servlet.MvcResult;
 
 import java.math.BigDecimal;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
-@Transactional
-class ProductControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private UserRepository userRepository;
+class ProductControllerTest extends BaseControllerTest {
 
     @Autowired
     private CategoryRepository categoryRepository;
 
     @Autowired
     private ProductRepository productRepository;
-
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
-    }
-
-    private User authenticateUser() {
-        User user = new User("User Teste", "product_user", "password123", UserRole.USER);
-        User savedUser = userRepository.save(user);
-        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(savedUser, null, savedUser.getAuthorities());
-        SecurityContextHolder.getContext().setAuthentication(auth);
-        return savedUser;
-    }
 
     private Category createCategory(User user, String name) {
         Category cat = new Category();
@@ -78,15 +44,16 @@ class ProductControllerTest {
 
     @Test
     void getProducts_ShouldReturn200OK_WhenTokenIsValid() throws Exception {
-        authenticateUser();
+        User user = createUser("User Teste", "product_user", "password123", UserRole.USER);
 
-        mockMvc.perform(get("/product"))
+        mockMvc.perform(get("/product")
+                .header("Authorization", bearerTokenFor(user)))
                 .andExpect(status().isOk());
     }
 
     @Test
     void saveProduct_ShouldReturn201Created_WhenAuthenticatedAndValid() throws Exception {
-        User user = authenticateUser();
+        User user = createUser("User Teste", "product_save", "password123", UserRole.USER);
         Category cat = createCategory(user, "Bebidas");
 
         ProductDTO dto = new ProductDTO();
@@ -95,6 +62,7 @@ class ProductControllerTest {
         dto.setCategoryId(cat.getId());
 
         mockMvc.perform(post("/product")
+                .header("Authorization", bearerTokenFor(user))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
@@ -103,13 +71,14 @@ class ProductControllerTest {
 
     @Test
     void saveProduct_ShouldReturn400BadRequest_WhenInvalidDTO() throws Exception {
-        authenticateUser();
+        User user = createUser("User Teste", "product_invalid", "password123", UserRole.USER);
 
         ProductDTO dto = new ProductDTO();
         dto.setName("Produto Sem Categoria");
         dto.setQtd(-5);
 
         mockMvc.perform(post("/product")
+                .header("Authorization", bearerTokenFor(user))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isBadRequest())
@@ -118,7 +87,7 @@ class ProductControllerTest {
 
     @Test
     void updateProduct_ShouldReturn200OK_WhenKeepingSameName() throws Exception {
-        User user = authenticateUser();
+        User user = createUser("User Teste", "product_upd", "password123", UserRole.USER);
         Category cat = createCategory(user, "Bebidas");
 
         Product p = new Product();
@@ -134,6 +103,7 @@ class ProductControllerTest {
         dto.setCategoryId(cat.getId());
 
         mockMvc.perform(put("/product/{id}", saved.getId())
+                .header("Authorization", bearerTokenFor(user))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
@@ -142,7 +112,7 @@ class ProductControllerTest {
 
     @Test
     void updateProduct_ShouldReturn409Conflict_WhenDuplicateNameFromOtherProduct() throws Exception {
-        User user = authenticateUser();
+        User user = createUser("User Teste", "product_dup", "password123", UserRole.USER);
         Category cat = createCategory(user, "Bebidas");
 
         Product p1 = new Product();
@@ -165,6 +135,7 @@ class ProductControllerTest {
         dto.setCategoryId(cat.getId());
 
         mockMvc.perform(put("/product/{id}", saved2.getId())
+                .header("Authorization", bearerTokenFor(user))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isConflict());
@@ -172,7 +143,7 @@ class ProductControllerTest {
 
     @Test
     void summaryProducts_ShouldReturnExactCounts() throws Exception {
-        User user = authenticateUser();
+        User user = createUser("User Teste", "product_sum", "password123", UserRole.USER);
         Category cat = createCategory(user, "Bebidas");
 
         Product available = new Product();
@@ -196,7 +167,8 @@ class ProductControllerTest {
         noStock.setUser(user);
         productRepository.save(noStock);
 
-        mockMvc.perform(get("/product/summary"))
+        mockMvc.perform(get("/product/summary")
+                .header("Authorization", bearerTokenFor(user)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalProduct").value(3))
                 .andExpect(jsonPath("$.lowStock").value(1))
@@ -204,8 +176,9 @@ class ProductControllerTest {
     }
 
     @Test
-    void saveProductWithPricesAndMinQuantity_ShouldCalculateSummaryAndRecordMovements() throws Exception {
-        User user = authenticateUser();
+    void saveProductWithPricesAndMinQuantity_ShouldCalculateSummaryAndRecordFullMovementLifecycle() throws Exception {
+        User user = createUser("User Teste", "product_mov", "password123", UserRole.USER);
+        String token = bearerTokenFor(user);
         Category cat = createCategory(user, "Mercearia");
 
         ProductDTO dto = new ProductDTO();
@@ -216,21 +189,71 @@ class ProductControllerTest {
         dto.setMinQuantity(10);
         dto.setCategoryId(cat.getId());
 
-        mockMvc.perform(post("/product")
+        MvcResult createdResult = mockMvc.perform(post("/product")
+                .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.status").value("Estoque Baixo"));
+                .andExpect(jsonPath("$.status").value("Estoque Baixo"))
+                .andReturn();
 
-        mockMvc.perform(get("/product/summary"))
+        Long productId = objectMapper.readTree(createdResult.getResponse().getContentAsString()).get("id").asLong();
+
+        mockMvc.perform(get("/product/summary")
+                .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.lowStock").value(1))
                 .andExpect(jsonPath("$.totalStockValue").value(120.0))
                 .andExpect(jsonPath("$.totalSaleValue").value(200.0));
 
-        mockMvc.perform(get("/product/movements"))
+        dto.setQtd(12);
+        mockMvc.perform(put("/product/{id}", productId)
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].productName").value("Arroz 5kg"))
-                .andExpect(jsonPath("$[0].movementType").value("CADASTRO"));
+                .andExpect(jsonPath("$.status").value("Disponível"));
+
+        dto.setQtd(6);
+        mockMvc.perform(put("/product/{id}", productId)
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(delete("/product/{id}", productId)
+                .header("Authorization", token))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/product/movements")
+                .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(4))
+                .andExpect(jsonPath("$[?(@.movementType == 'CADASTRO')].quantityDelta").value(8))
+                .andExpect(jsonPath("$[?(@.movementType == 'ENTRADA')].quantityDelta").value(4))
+                .andExpect(jsonPath("$[?(@.movementType == 'SAIDA')].quantityDelta").value(-6))
+                .andExpect(jsonPath("$[?(@.movementType == 'EXCLUSAO')].quantityDelta").value(-6));
+    }
+
+    @Test
+    void multiTenantIsolation_ShouldReturn404_WhenOtherUserTriesToAccessProduct() throws Exception {
+        User owner = createUser("Dono", "prod_owner", "password123", UserRole.USER);
+        User intruder = createUser("Invasor", "prod_intruder", "password123", UserRole.USER);
+        Category cat = createCategory(owner, "Bebidas");
+
+        Product p = new Product();
+        p.setName("Produto Privado");
+        p.setQtd(10);
+        p.setCategories(cat);
+        p.setUser(owner);
+        Product saved = productRepository.save(p);
+
+        mockMvc.perform(get("/product/{id}", saved.getId())
+                .header("Authorization", bearerTokenFor(intruder)))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(delete("/product/{id}", saved.getId())
+                .header("Authorization", bearerTokenFor(intruder)))
+                .andExpect(status().isNotFound());
     }
 }
