@@ -30,6 +30,9 @@ services:
       - DB_PASS=${POSTGRES_PASSWORD:-senhasecreta}
       - JWT_SECRET=${JWT_SECRET:-chavesecreta}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      - ADMIN_NAME=${ADMIN_NAME:-Administrador}
     depends_on:
       - postgres
     networks:

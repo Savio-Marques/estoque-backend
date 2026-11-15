@@ -2,14 +2,17 @@ package com.marques.estoque.service;
 
 import com.marques.estoque.dto.UserCreateDTO;
 import com.marques.estoque.dto.UserResponseDTO;
+import com.marques.estoque.exception.ArgumentException;
 import com.marques.estoque.exception.DuplicateDataException;
 import com.marques.estoque.exception.NotFoundException;
 import com.marques.estoque.model.user.User;
+import com.marques.estoque.model.user.UserRole;
 import com.marques.estoque.repository.CategoryRepository;
 import com.marques.estoque.repository.DebtorRepository;
 import com.marques.estoque.repository.ProductRepository;
 import com.marques.estoque.repository.StockMovementRepository;
 import com.marques.estoque.repository.UserRepository;
+import com.marques.estoque.security.AuthenticatedUserProvider;
 import com.marques.estoque.util.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +34,7 @@ public class UserService {
     private final StockMovementRepository stockMovementRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+    private final AuthenticatedUserProvider authenticatedUserProvider;
 
     public List<UserResponseDTO> findAll() {
         List<User> userList = userRepository.findAll();
@@ -51,15 +55,22 @@ public class UserService {
             throw new DuplicateDataException("Nome de usuário já cadastrado.");
         }
 
-        user.setName(userCreateDTO.getName());
-        user.setUsername(userCreateDTO.getUsername());
+        User currentUser = authenticatedUserProvider.getCurrentUser();
+        if (currentUser.getId().equals(id) && userCreateDTO.getRole() == UserRole.USER) {
+            throw new ArgumentException("Você não pode remover seu próprio privilégio de administrador.");
+        }
+
+        user.setName(userCreateDTO.getName().trim());
+        user.setUsername(userCreateDTO.getUsername().trim());
 
         if (userCreateDTO.getPassword() != null && !userCreateDTO.getPassword().trim().isEmpty()) {
             String encryptedPassword = passwordEncoder.encode(userCreateDTO.getPassword());
             user.setPassword(encryptedPassword);
         }
 
-        user.setRole(userCreateDTO.getRole());
+        if (userCreateDTO.getRole() != null) {
+            user.setRole(userCreateDTO.getRole());
+        }
 
         return userMapper.toUserResponseDTO(userRepository.save(user));
     }
@@ -67,6 +78,11 @@ public class UserService {
     @Transactional
     public String delete(Long id) {
         log.info("Deletando id: {} do banco de dados", id);
+        User currentUser = authenticatedUserProvider.getCurrentUser();
+        if (currentUser.getId().equals(id)) {
+            throw new ArgumentException("Você não pode excluir sua própria conta.");
+        }
+
         User user = userRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Usuário não encontrado com o id: {}", id);

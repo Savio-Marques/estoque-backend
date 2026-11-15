@@ -18,7 +18,38 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AuthenticationControllerTest extends BaseControllerTest {
 
     @Test
-    void register_ShouldReturn200OK() throws Exception {
+    void register_ShouldReturn401Unauthorized_WhenUnauthenticated() throws Exception {
+        UserCreateDTO dto = new UserCreateDTO();
+        dto.setName("João");
+        dto.setUsername("joao_publico");
+        dto.setPassword("senha123");
+
+        mockMvc.perform(post("/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void register_ShouldReturn403Forbidden_WhenRegularUserTriesToRegister() throws Exception {
+        User regularUser = createUser("Comum", "comum_reg", "senha123", UserRole.USER);
+
+        UserCreateDTO dto = new UserCreateDTO();
+        dto.setName("João");
+        dto.setUsername("joao_bloqueado");
+        dto.setPassword("senha123");
+
+        mockMvc.perform(post("/auth/register")
+                .header("Authorization", bearerTokenFor(regularUser))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void register_ShouldReturn200OK_WhenAdminRegistersUser() throws Exception {
+        User admin = createUser("Root", "admin_reg", "senha123", UserRole.ADMIN);
+
         UserCreateDTO dto = new UserCreateDTO();
         dto.setName("João");
         dto.setUsername("joao_auth");
@@ -26,13 +57,19 @@ class AuthenticationControllerTest extends BaseControllerTest {
         dto.setRole(UserRole.USER);
 
         mockMvc.perform(post("/auth/register")
+                .header("Authorization", bearerTokenFor(admin))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("joao_auth"))
+                .andExpect(jsonPath("$.role").value("USER"));
     }
 
     @Test
     void register_ShouldReturn409Conflict_WhenUsernameExists() throws Exception {
+        User admin = createUser("Root", "admin_dup_reg", "senha123", UserRole.ADMIN);
+        String adminToken = bearerTokenFor(admin);
+
         UserCreateDTO dto = new UserCreateDTO();
         dto.setName("Maria");
         dto.setUsername("maria_auth");
@@ -40,11 +77,13 @@ class AuthenticationControllerTest extends BaseControllerTest {
         dto.setRole(UserRole.USER);
 
         mockMvc.perform(post("/auth/register")
+                .header("Authorization", adminToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(post("/auth/register")
+                .header("Authorization", adminToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isConflict());
@@ -52,12 +91,15 @@ class AuthenticationControllerTest extends BaseControllerTest {
 
     @Test
     void register_ShouldReturn400BadRequest_WhenPasswordIsBlank() throws Exception {
+        User admin = createUser("Root", "admin_blank_pwd", "senha123", UserRole.ADMIN);
+
         UserCreateDTO dto = new UserCreateDTO();
         dto.setName("João");
         dto.setUsername("joao_sem_senha");
         dto.setPassword("   ");
 
         mockMvc.perform(post("/auth/register")
+                .header("Authorization", bearerTokenFor(admin))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isBadRequest())
@@ -65,8 +107,8 @@ class AuthenticationControllerTest extends BaseControllerTest {
     }
 
     @Test
-    void login_ShouldReturn200AndTokenAndName_WhenCredentialsAreValid() throws Exception {
-        createUser("Sávio Marques", "savio_login", "SenhaForte123", UserRole.USER);
+    void login_ShouldReturn200AndTokenAndNameAndRole_WhenCredentialsAreValid() throws Exception {
+        createUser("Sávio Marques", "savio_login", "SenhaForte123", UserRole.ADMIN);
 
         LoginRequestDTO loginDto = new LoginRequestDTO();
         loginDto.setUsername("savio_login");
@@ -78,7 +120,8 @@ class AuthenticationControllerTest extends BaseControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token", notNullValue()))
                 .andExpect(jsonPath("$.name").value("Sávio Marques"))
-                .andExpect(jsonPath("$.username").value("savio_login"));
+                .andExpect(jsonPath("$.username").value("savio_login"))
+                .andExpect(jsonPath("$.role").value("ADMIN"));
     }
 
     @Test

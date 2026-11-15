@@ -51,17 +51,18 @@ public class AuthenticationController {
         User user = (User) auth.getPrincipal();
         var token = tokenService.generateToken(user);
 
-        return ResponseEntity.ok(new LoginResponseDTO(token, user.getName(), user.getUsername()));
+        return ResponseEntity.ok(new LoginResponseDTO(token, user.getName(), user.getUsername(), user.getRole().name()));
     }
 
-    @Operation(summary = "Realiza o cadastro de um usuário")
+    @Operation(summary = "Realiza o cadastro de um usuário (somente ADMIN)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Usuário cadastrado com sucesso"),
             @ApiResponse(responseCode = "400", description = "Campos em falta ou dados inválidos"),
+            @ApiResponse(responseCode = "403", description = "Apenas administradores podem cadastrar novos usuários"),
             @ApiResponse(responseCode = "409", description = "Nome de usuário já cadastrado")
     })
     @PostMapping("/register")
-    public ResponseEntity<Void> register(@RequestBody @Valid UserCreateDTO userCreateDTO) {
+    public ResponseEntity<UserResponseDTO> register(@RequestBody @Valid UserCreateDTO userCreateDTO) {
         if (userCreateDTO.getPassword() == null || userCreateDTO.getPassword().trim().isEmpty()) {
             throw new ArgumentException("A senha do usuário não pode ser vazia.");
         }
@@ -70,11 +71,12 @@ public class AuthenticationController {
         }
 
         String encryptedPassword = passwordEncoder.encode(userCreateDTO.getPassword());
-        User newUser = new User(userCreateDTO.getName(), userCreateDTO.getUsername(), encryptedPassword, UserRole.USER);
+        UserRole role = userCreateDTO.getRole() != null ? userCreateDTO.getRole() : UserRole.USER;
+        User newUser = new User(userCreateDTO.getName().trim(), userCreateDTO.getUsername().trim(), encryptedPassword, role);
 
-        this.userRepository.save(newUser);
+        User saved = this.userRepository.save(newUser);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(userMapper.toUserResponseDTO(saved));
     }
 
     @Operation(summary = "Retorna os dados do usuário autenticado")
