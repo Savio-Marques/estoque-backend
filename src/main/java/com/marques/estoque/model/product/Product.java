@@ -36,7 +36,7 @@ public class Product {
     @PositiveOrZero(message = "A quantidade não pode ser um número negativo.")
     private Integer qtd;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     @NotNull(message = "O produto precisa pertencer a uma categoria.")
     private Category categories;

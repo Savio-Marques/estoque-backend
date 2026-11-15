@@ -30,6 +30,6 @@ public interface DebtorRepository extends JpaRepository<Debtor, Long> {
 
     List<Debtor> findByUserAndNameContainingIgnoreCase(User user, String clientName);
 
-
+    void deleteAllByUser(User user);
 
 }

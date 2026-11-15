@@ -3,19 +3,17 @@ package com.marques.estoque.util;
 import com.marques.estoque.dto.DebtorDTO;
 import com.marques.estoque.model.Debtor;
 import org.mapstruct.Mapper;
-import org.mapstruct.factory.Mappers;
+import org.mapstruct.Mapping;
 
 import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface DebtorMapper {
 
-    DebtorMapper INSTANCE = Mappers.getMapper(DebtorMapper.class);
-
+    @Mapping(target = "user", ignore = true)
     Debtor toDebtor(DebtorDTO debtorDTO);
 
     DebtorDTO toDTO(Debtor debtor);
 
     List<DebtorDTO> toDTOList(List<Debtor> debtor);
-
 }

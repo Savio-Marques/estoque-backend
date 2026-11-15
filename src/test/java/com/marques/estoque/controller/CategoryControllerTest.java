@@ -3,9 +3,11 @@ package com.marques.estoque.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marques.estoque.dto.CategoryDTO;
 import com.marques.estoque.model.product.Category;
+import com.marques.estoque.model.product.Product;
 import com.marques.estoque.model.user.User;
 import com.marques.estoque.model.user.UserRole;
 import com.marques.estoque.repository.CategoryRepository;
+import com.marques.estoque.repository.ProductRepository;
 import com.marques.estoque.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +21,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -41,6 +44,9 @@ class CategoryControllerTest {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    private ProductRepository productRepository;
 
     @AfterEach
     void tearDown() {
@@ -108,5 +114,39 @@ class CategoryControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void deleteCategory_ShouldReturnError_WhenCategoryHasProducts() throws Exception {
+        User user = authenticateUser();
+
+        Category cat = new Category();
+        cat.setName("Bebidas");
+        cat.setUser(user);
+        Category savedCat = categoryRepository.save(cat);
+
+        Product prod = new Product();
+        prod.setName("Água");
+        prod.setQtd(10);
+        prod.setCategories(savedCat);
+        prod.setUser(user);
+        productRepository.save(prod);
+
+        mockMvc.perform(delete("/category/{id}", savedCat.getId()))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    void deleteCategory_ShouldReturn200OK_WhenCategoryIsEmpty() throws Exception {
+        User user = authenticateUser();
+
+        Category cat = new Category();
+        cat.setName("Vazia");
+        cat.setUser(user);
+        Category savedCat = categoryRepository.save(cat);
+
+        mockMvc.perform(delete("/category/{id}", savedCat.getId()))
+                .andExpect(status().isOk());
     }
 }

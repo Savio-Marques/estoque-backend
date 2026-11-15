@@ -8,10 +8,10 @@ import com.marques.estoque.exception.NotFoundException;
 import com.marques.estoque.model.Debtor;
 import com.marques.estoque.model.user.User;
 import com.marques.estoque.repository.DebtorRepository;
+import com.marques.estoque.security.AuthenticatedUserProvider;
 import com.marques.estoque.util.DebtorMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -21,55 +21,56 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class DebtorService {
 
-    @Autowired
-    private DebtorRepository debtorRepository;
+    private final DebtorRepository debtorRepository;
+    private final DebtorMapper debtorMapper;
+    private final AuthenticatedUserProvider authenticatedUserProvider;
 
     public DebtorDTO findById(Long id) {
         log.info("Buscando devedor por id para o usuário logado");
-        return DebtorMapper.INSTANCE.toDTO(returnDebtorWithId(id, getCurrentUser()));
+        return debtorMapper.toDTO(returnDebtorWithId(id, authenticatedUserProvider.getCurrentUser()));
     }
 
     public DebtorDTO findByName(String name) {
         log.info("Buscando devedor por nome para o usuário logado");
-        return DebtorMapper.INSTANCE.toDTO(returnDebtorWithName(name, getCurrentUser()));
+        return debtorMapper.toDTO(returnDebtorWithName(name, authenticatedUserProvider.getCurrentUser()));
     }
 
     public List<DebtorDTO> findAll() {
         log.info("Buscando todos os devedores para o usuário logado");
-        return DebtorMapper.INSTANCE.toDTOList(debtorRepository.findAllByUser(getCurrentUser()));
+        return debtorMapper.toDTOList(debtorRepository.findAllByUser(authenticatedUserProvider.getCurrentUser()));
     }
 
     public DebtorDTO save(DebtorDTO debtorDTO) {
         log.info("Criando um devedor para o usuário logado");
         validateDebtor(debtorDTO.getName(), debtorDTO.getValue());
 
-        Debtor debtor =  DebtorMapper.INSTANCE.toDebtor(debtorDTO);
-
+        Debtor debtor = debtorMapper.toDebtor(debtorDTO);
         debtor.setDate(LocalDateTime.now(ZoneOffset.UTC));
+        debtor.setUser(authenticatedUserProvider.getCurrentUser());
 
-        debtor.setUser(getCurrentUser());
-
-        return DebtorMapper.INSTANCE.toDTO(debtorRepository.save(debtor));
+        return debtorMapper.toDTO(debtorRepository.save(debtor));
     }
 
-    public DebtorDTO update (Long id, DebtorDTO debtorDTO) {
+    public DebtorDTO update(Long id, DebtorDTO debtorDTO) {
         log.info("Atualizando um devedor para o usuário logado");
         validateDebtor(debtorDTO.getName(), debtorDTO.getValue());
 
-        Debtor debtor = returnDebtorWithId(id, getCurrentUser());
+        User currentUser = authenticatedUserProvider.getCurrentUser();
+        Debtor debtor = returnDebtorWithId(id, currentUser);
 
-        updateDebtor(debtor, debtorDTO);
+        updateDebtor(debtor, debtorDTO, currentUser);
 
-        return DebtorMapper.INSTANCE.toDTO(debtorRepository.save(debtor));
+        return debtorMapper.toDTO(debtorRepository.save(debtor));
     }
 
-    public String delete (Long id) {
+    public String delete(Long id) {
         log.info("Deletando um devedor para o usuário logado");
-        if (!debtorRepository.existsByIdAndUser(id, getCurrentUser())){
-            log.error("Devedor não encontrado com o id: {}",id);
+        if (!debtorRepository.existsByIdAndUser(id, authenticatedUserProvider.getCurrentUser())) {
+            log.error("Devedor não encontrado com o id: {}", id);
             throw new NotFoundException("Devedor com o id " + id + " não encontrado");
         }
 
@@ -77,20 +78,20 @@ public class DebtorService {
         return "Devedor com id " + id + " deletado com sucesso";
     }
 
-    public SummaryDebtorsDTO summaryDebtors(){
+    public SummaryDebtorsDTO summaryDebtors() {
         log.info("Contando quantidade e total de valores dos devedores");
+        User currentUser = authenticatedUserProvider.getCurrentUser();
 
-        BigDecimal totalValue = Optional.ofNullable(debtorRepository.sumTotalValueByUser(getCurrentUser()))
+        BigDecimal totalValue = Optional.ofNullable(debtorRepository.sumTotalValueByUser(currentUser))
                 .orElse(BigDecimal.ZERO);
 
-        Integer totalDebtors = debtorRepository.countTotalDebtorsByUser(getCurrentUser());
+        Integer totalDebtors = debtorRepository.countTotalDebtorsByUser(currentUser);
 
         return new SummaryDebtorsDTO(totalValue, totalDebtors);
-
     }
 
     public DebtorsPageDTO findDebtorsWithFilters(String clientName) {
-        User currentUser = getCurrentUser();
+        User currentUser = authenticatedUserProvider.getCurrentUser();
 
         List<Debtor> filteredDebtors;
 
@@ -108,19 +109,9 @@ public class DebtorService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         SummaryDebtorsDTO summary = new SummaryDebtorsDTO(totalValue, totalDebtors);
-        List<DebtorDTO> debtorDTOs = DebtorMapper.INSTANCE.toDTOList(filteredDebtors);
+        List<DebtorDTO> debtorDTOs = debtorMapper.toDTOList(filteredDebtors);
 
         return new DebtorsPageDTO(debtorDTOs, summary);
-    }
-
-    /*
-
-    -------------FUNÇÕES AUXILIARES-------------
-
-    */
-
-    private User getCurrentUser() {
-        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
     private Debtor returnDebtorWithId(Long id, User user) {
@@ -133,15 +124,15 @@ public class DebtorService {
                 .orElseThrow(() -> new NotFoundException("Devedor com o nome: " + name + " não encontrado"));
     }
 
-    private void updateDebtor(Debtor debtor, DebtorDTO debtorDTO) {
+    private void updateDebtor(Debtor debtor, DebtorDTO debtorDTO, User currentUser) {
         debtor.setName(debtorDTO.getName());
         debtor.setValue(debtorDTO.getValue());
         debtor.setDescription(debtorDTO.getDescription());
-        debtor.setUser(getCurrentUser());
+        debtor.setUser(currentUser);
     }
 
     private void validateDebtor(String name, BigDecimal value) {
-        if (name == null || name.isEmpty()) {
+        if (name == null || name.trim().isEmpty()) {
             log.error("O nome do devedor não pode ser nulo ou vazio");
             throw new ArgumentException("O nome do devedor não pode ser vazio");
         }

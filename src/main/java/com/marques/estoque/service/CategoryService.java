@@ -8,86 +8,80 @@ import com.marques.estoque.exception.NotFoundException;
 import com.marques.estoque.model.product.Category;
 import com.marques.estoque.model.user.User;
 import com.marques.estoque.repository.CategoryRepository;
+import com.marques.estoque.repository.ProductRepository;
+import com.marques.estoque.security.AuthenticatedUserProvider;
 import com.marques.estoque.util.CategoryMapper;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
+    private final CategoryMapper categoryMapper;
+    private final AuthenticatedUserProvider authenticatedUserProvider;
 
     public CategoryDTO findById(Long id) {
         log.info("Buscando categoria id: {} para o usuário logado", id);
-        return CategoryMapper.INSTANCE.toDTO(returnCategory(id, getCurrentUser()));
+        return categoryMapper.toDTO(returnCategory(id, authenticatedUserProvider.getCurrentUser()));
     }
 
     public CategoryDTO findByName(String name) {
         log.info("Buscando categoria por nome: {} para o usuário logado", name);
-
-        return CategoryMapper.INSTANCE.toDTO(returnProductWithName(name, getCurrentUser()));
+        return categoryMapper.toDTO(returnCategoryWithName(name, authenticatedUserProvider.getCurrentUser()));
     }
 
     public List<CategoryDTO> findAll() {
         log.info("Buscando todas as categorias para o usuário logado");
-
-        List<Category> categories = categoryRepository.findAllByUserOrderByIdAsc(getCurrentUser());
-
-        return CategoryMapper.INSTANCE.toDTOList(categories);
+        List<Category> categories = categoryRepository.findAllByUserOrderByIdAsc(authenticatedUserProvider.getCurrentUser());
+        return categoryMapper.toDTOList(categories);
     }
 
     public CategoryDTO save(CategoryDTO categoryDTO) {
         log.info("Cadastrando nova categoria: {} para o usuário logado", categoryDTO.getName());
+        User currentUser = authenticatedUserProvider.getCurrentUser();
 
-        validateAndCheckCategoryName(categoryDTO.getName(), null);
+        validateAndCheckCategoryName(categoryDTO.getName(), currentUser, null);
 
-        Category category = CategoryMapper.INSTANCE.toEntity(categoryDTO);
+        Category category = categoryMapper.toEntity(categoryDTO);
+        category.setUser(currentUser);
 
-        category.setUser(getCurrentUser());
-
-        return CategoryMapper.INSTANCE.toDTO(categoryRepository.save(category));
+        return categoryMapper.toDTO(categoryRepository.save(category));
     }
 
-    public CategoryDTO update (Long id, CategoryDTO categoryDTO) {
+    public CategoryDTO update(Long id, CategoryDTO categoryDTO) {
         log.info("Atualizando a categoria id: {} para o usuário logado", id);
-        Category category = returnCategory(id, getCurrentUser());
+        User currentUser = authenticatedUserProvider.getCurrentUser();
+        Category category = returnCategory(id, currentUser);
 
-        validateAndCheckCategoryName(categoryDTO.getName(), id);
+        validateAndCheckCategoryName(categoryDTO.getName(), currentUser, id);
 
         category.setName(categoryDTO.getName());
-        return CategoryMapper.INSTANCE.toDTO(categoryRepository.save(category));
+        return categoryMapper.toDTO(categoryRepository.save(category));
     }
 
     public String delete(Long id) {
         log.info("Deletando a categoria: {}", id);
-        if (!categoryRepository.existsByIdAndUser(id, getCurrentUser())) {
+        User currentUser = authenticatedUserProvider.getCurrentUser();
+
+        if (!categoryRepository.existsByIdAndUser(id, currentUser)) {
             log.error("Categoria {} não encontrada", id);
             throw new NotFoundException("Categoria " + id + " não encontrada");
         }
 
-        if (!findById(id).getProducts().isEmpty()) {
+        if (productRepository.existsByCategoriesIdAndUser(id, currentUser)) {
             log.error("Categoria com um ou mais produtos registrados");
             throw new GeneralException("Não é possível excluir categorias com produtos associados, excluir produtos primeiro.");
         }
 
         categoryRepository.deleteById(id);
-        return "Categoria "  + id + " excluida com sucesso";
-    }
-
-    /*
-
-    -------------FUNÇÕES AUXILIARES-------------
-
-    */
-
-    private User getCurrentUser() {
-        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return "Categoria " + id + " excluida com sucesso";
     }
 
     public Category returnCategory(Long id, User user) {
@@ -95,19 +89,17 @@ public class CategoryService {
                 .orElseThrow(() -> new NotFoundException("Categoria com o id " + id + " não encontrada"));
     }
 
-    private Category returnProductWithName(String name, User user) {
+    private Category returnCategoryWithName(String name, User user) {
         return categoryRepository.findByNameIgnoreCaseAndUser(name, user)
-                .orElseThrow(() -> new NotFoundException("Categoria "+ name + " não encontrada"));
+                .orElseThrow(() -> new NotFoundException("Categoria " + name + " não encontrada"));
     }
 
-
-    private void validateAndCheckCategoryName(String name, Long excludeId){
+    private void validateAndCheckCategoryName(String name, User currentUser, Long excludeId) {
         if (name == null || name.trim().isEmpty()) {
             log.error("Nome da categoria não pode ser vazio");
             throw new ArgumentException("Nome da categoria não pode ser vazio");
         }
 
-        User currentUser = getCurrentUser();
         boolean exists = (excludeId == null)
                 ? categoryRepository.findByNameIgnoreCaseAndUser(name, currentUser).isPresent()
                 : categoryRepository.existsByNameIgnoreCaseAndUserAndIdNot(name, currentUser, excludeId);
@@ -118,4 +110,3 @@ public class CategoryService {
         }
     }
 }
-

@@ -167,4 +167,37 @@ class ProductControllerTest {
                 .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isConflict());
     }
+
+    @Test
+    void summaryProducts_ShouldReturnExactCounts() throws Exception {
+        User user = authenticateUser();
+        Category cat = createCategory(user, "Bebidas");
+
+        Product available = new Product();
+        available.setName("Água 500ml");
+        available.setQtd(20);
+        available.setCategories(cat);
+        available.setUser(user);
+        productRepository.save(available);
+
+        Product lowStock = new Product();
+        lowStock.setName("Suco");
+        lowStock.setQtd(3);
+        lowStock.setCategories(cat);
+        lowStock.setUser(user);
+        productRepository.save(lowStock);
+
+        Product noStock = new Product();
+        noStock.setName("Refrigerante");
+        noStock.setQtd(0);
+        noStock.setCategories(cat);
+        noStock.setUser(user);
+        productRepository.save(noStock);
+
+        mockMvc.perform(get("/product/summary"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalProduct").value(3))
+                .andExpect(jsonPath("$.lowStock").value(1))
+                .andExpect(jsonPath("$.noStock").value(1));
+    }
 }

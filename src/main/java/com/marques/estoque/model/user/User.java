@@ -37,7 +37,8 @@ public class User implements UserDetails {
     @NotBlank(message = "A senha do usuário não pode ser vazia.")
     private String password;
 
-    @Column(name = "role", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 20)
     @NotNull(message = "A role (função) não pode ser nula.")
     private UserRole role;
 
