@@ -2,6 +2,7 @@ package com.marques.estoque.service;
 
 import com.marques.estoque.dto.UserCreateDTO;
 import com.marques.estoque.dto.UserResponseDTO;
+import com.marques.estoque.exception.DuplicateDataException;
 import com.marques.estoque.exception.NotFoundException;
 import com.marques.estoque.model.user.User;
 import com.marques.estoque.repository.UserRepository;
@@ -38,6 +39,10 @@ public class UserService {
     public UserResponseDTO update(Long id, UserCreateDTO userCreateDTO) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Usuário com o id: " + id + " não encontrado"));
+
+        if (userRepository.existsByUsernameAndIdNot(userCreateDTO.getUsername(), id)) {
+            throw new DuplicateDataException("Nome de usuário já cadastrado.");
+        }
 
         user.setName(userCreateDTO.getName());
         user.setUsername(userCreateDTO.getUsername());

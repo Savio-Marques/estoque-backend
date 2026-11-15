@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -77,7 +78,7 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    void login_ShouldReturnError_WhenCredentialsWrong() throws Exception {
+    void login_ShouldReturn401Unauthorized_WhenCredentialsWrong() throws Exception {
         UserCreateDTO loginDto = new UserCreateDTO();
         loginDto.setUsername("naoexiste");
         loginDto.setPassword("errada");
@@ -85,6 +86,21 @@ class AuthenticationControllerTest {
         mockMvc.perform(post("/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginDto)))
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Usuário ou senha inválidos."));
+    }
+
+    @Test
+    void register_ShouldReturn400BadRequest_WhenPasswordIsBlank() throws Exception {
+        UserCreateDTO dto = new UserCreateDTO();
+        dto.setName("João");
+        dto.setUsername("joao_sem_senha");
+        dto.setPassword("   ");
+
+        mockMvc.perform(post("/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists());
     }
 }

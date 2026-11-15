@@ -45,7 +45,7 @@ public class CategoryService {
     public CategoryDTO save(CategoryDTO categoryDTO) {
         log.info("Cadastrando nova categoria: {} para o usuário logado", categoryDTO.getName());
 
-        validateAndCheckCategoryName(categoryDTO.getName());
+        validateAndCheckCategoryName(categoryDTO.getName(), null);
 
         Category category = CategoryMapper.INSTANCE.toEntity(categoryDTO);
 
@@ -58,7 +58,7 @@ public class CategoryService {
         log.info("Atualizando a categoria id: {} para o usuário logado", id);
         Category category = returnCategory(id, getCurrentUser());
 
-        validateAndCheckCategoryName(categoryDTO.getName());
+        validateAndCheckCategoryName(categoryDTO.getName(), id);
 
         category.setName(categoryDTO.getName());
         return CategoryMapper.INSTANCE.toDTO(categoryRepository.save(category));
@@ -101,13 +101,18 @@ public class CategoryService {
     }
 
 
-    private void validateAndCheckCategoryName(String name){
-        if (name == null || name.isEmpty()) {
+    private void validateAndCheckCategoryName(String name, Long excludeId){
+        if (name == null || name.trim().isEmpty()) {
             log.error("Nome da categoria não pode ser vazio");
             throw new ArgumentException("Nome da categoria não pode ser vazio");
         }
 
-        if (categoryRepository.findByNameIgnoreCaseAndUser(name, getCurrentUser()).isPresent()) {
+        User currentUser = getCurrentUser();
+        boolean exists = (excludeId == null)
+                ? categoryRepository.findByNameIgnoreCaseAndUser(name, currentUser).isPresent()
+                : categoryRepository.existsByNameIgnoreCaseAndUserAndIdNot(name, currentUser, excludeId);
+
+        if (exists) {
             log.error("Categoria já existente");
             throw new DuplicateDataException("Categoria " + name + " já existente");
         }

@@ -1,5 +1,7 @@
 package com.marques.estoque.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.marques.estoque.dto.DebtorDTO;
 import com.marques.estoque.model.user.User;
 import com.marques.estoque.model.user.UserRole;
 import com.marques.estoque.repository.UserRepository;
@@ -8,13 +10,18 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -25,6 +32,9 @@ class DebtorControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Autowired
     private UserRepository userRepository;
@@ -42,9 +52,9 @@ class DebtorControllerTest {
     }
 
     @Test
-    void getDebtors_ShouldReturn403Forbidden_WhenNoToken() throws Exception {
+    void getDebtors_ShouldReturn401Unauthorized_WhenNoToken() throws Exception {
         mockMvc.perform(get("/debtor"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -53,5 +63,20 @@ class DebtorControllerTest {
 
         mockMvc.perform(get("/debtor"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void saveDebtor_ShouldReturn400BadRequest_WhenValueIsNegative() throws Exception {
+        authenticateUser();
+
+        DebtorDTO dto = new DebtorDTO();
+        dto.setName("Cliente Teste");
+        dto.setValue(new BigDecimal("-10.00"));
+
+        mockMvc.perform(post("/debtor")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists());
     }
 }

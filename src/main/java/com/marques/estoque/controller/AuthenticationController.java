@@ -1,7 +1,9 @@
 package com.marques.estoque.controller;
 
+import com.marques.estoque.dto.LoginRequestDTO;
 import com.marques.estoque.dto.LoginResponseDTO;
 import com.marques.estoque.dto.UserCreateDTO;
+import com.marques.estoque.exception.ArgumentException;
 import com.marques.estoque.exception.DuplicateDataException;
 import com.marques.estoque.model.user.User;
 import com.marques.estoque.model.user.UserRole;
@@ -42,11 +44,11 @@ public class AuthenticationController {
     @Operation(summary = "Realiza o login de um usuário")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Usuário logado com sucesso"),
-            @ApiResponse(responseCode = "403", description = "Acesso negado")
+            @ApiResponse(responseCode = "401", description = "Usuário ou senha inválidos")
     })
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid UserCreateDTO userCreateDTO) {
-        var userNamePassword = new UsernamePasswordAuthenticationToken(userCreateDTO.getUsername(), userCreateDTO.getPassword());
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid LoginRequestDTO loginRequestDTO) {
+        var userNamePassword = new UsernamePasswordAuthenticationToken(loginRequestDTO.getUsername(), loginRequestDTO.getPassword());
         var auth = this.authenticationManager.authenticate(userNamePassword);
 
         var token = tokenService.generateToken((User) auth.getPrincipal());
@@ -57,10 +59,14 @@ public class AuthenticationController {
     @Operation(summary = "Realiza o cadastro de um usuário")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Usuário cadastrado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Campos em falta ou dados inválidos"),
             @ApiResponse(responseCode = "409", description = "Nome de usuário já cadastrado")
     })
     @PostMapping("/register")
     public ResponseEntity<Void> register(@RequestBody @Valid UserCreateDTO userCreateDTO) {
+        if (userCreateDTO.getPassword() == null || userCreateDTO.getPassword().trim().isEmpty()) {
+            throw new ArgumentException("A senha do usuário não pode ser vazia.");
+        }
         if(this.userRepository.findByUsername(userCreateDTO.getUsername()) != null) throw new DuplicateDataException("Nome de usuário já cadastrado.");
 
         String encryptedPassword = passwordEncoder.encode(userCreateDTO.getPassword());

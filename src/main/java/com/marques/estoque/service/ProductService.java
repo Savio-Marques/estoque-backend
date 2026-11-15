@@ -46,7 +46,7 @@ public class ProductService {
 
         validateProduct(productDTO.getName(), productDTO.getQtd());
 
-        if (productRepository.existsByNameAndUser(productDTO.getName(), getCurrentUser())){
+        if (productRepository.existsByNameIgnoreCaseAndUser(productDTO.getName(), getCurrentUser())){
             throw new DuplicateDataException("Já existe um produto cadastrado com esse nome.");
         }
 
@@ -63,6 +63,10 @@ public class ProductService {
         Product product = returnProductWithId(id, getCurrentUser());
 
         validateProduct(productDTO.getName(), productDTO.getQtd());
+
+        if (productRepository.existsByNameIgnoreCaseAndUserAndIdNot(productDTO.getName(), getCurrentUser(), id)) {
+            throw new DuplicateDataException("Já existe um produto cadastrado com esse nome.");
+        }
 
         updateProductDTO(product, productDTO);
 
@@ -138,14 +142,14 @@ public class ProductService {
     }
 
     private void validateProduct(String name, Integer qtd) {
-        if (name == null || name.isEmpty()) {
+        if (name == null || name.trim().isEmpty()) {
             log.error("O nome do produto não pode ser nulo ou vazio");
             throw new ArgumentException("O nome do produto não pode ser vazio");
         }
 
-        if (qtd == null) {
-            log.error("A quantidade do produto não pode ser nula");
-            throw new ArgumentException("A quantidade do produto não pode ser nulo");
+        if (qtd == null || qtd < 0) {
+            log.error("A quantidade do produto não pode ser nula ou negativa");
+            throw new ArgumentException("A quantidade do produto deve ser maior ou igual a zero");
         }
 
     }

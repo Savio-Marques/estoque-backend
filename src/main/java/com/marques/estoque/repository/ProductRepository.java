@@ -19,7 +19,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Optional<List<Product>> findByNameContainingIgnoreCaseAndUser(String name, User user);
 
-    boolean existsByNameAndUser(String name, User user);
+    boolean existsByNameIgnoreCaseAndUser(String name, User user);
+
+    boolean existsByNameIgnoreCaseAndUserAndIdNot(String name, User user, Long id);
 
     boolean existsByIdAndUser(Long id, User user);
 

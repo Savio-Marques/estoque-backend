@@ -4,16 +4,46 @@ import com.marques.estoque.exception.ArgumentException;
 import com.marques.estoque.exception.DuplicateDataException;
 import com.marques.estoque.exception.GeneralException;
 import com.marques.estoque.exception.NotFoundException;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.time.Instant;
+import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
+
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException ex,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request) {
+        String message = ex.getBindingResult().getFieldErrors().stream()
+                .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                .collect(Collectors.joining("; "));
+        if (message.isBlank()) {
+            message = "Dados inválidos na requisição.";
+        }
+        StandardError err = new StandardError(HttpStatus.BAD_REQUEST, message, Instant.now());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(err);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    private ResponseEntity<StandardError> authenticationExceptionHandler(AuthenticationException exception) {
+        HttpStatus status = HttpStatus.UNAUTHORIZED;
+        StandardError err = new StandardError(status, "Usuário ou senha inválidos.", Instant.now());
+        return ResponseEntity.status(status).body(err);
+    }
 
     @ExceptionHandler(NotFoundException.class)
     private ResponseEntity<StandardError> notFoundHandler (NotFoundException exception) {
