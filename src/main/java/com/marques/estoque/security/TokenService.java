@@ -5,6 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.marques.estoque.model.user.User;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,15 @@ public class TokenService {
 
     @Value("${api.security.token.secret}")
     private String secret;
+
+    @PostConstruct
+    void validateSecret() {
+        if (secret == null || secret.isBlank() || "chavesecreta".equals(secret) || secret.trim().length() < 32) {
+            throw new IllegalStateException(
+                    "JWT_SECRET inválido ou fraco. Defina um segredo aleatório com no mínimo 32 caracteres."
+            );
+        }
+    }
 
     public String generateToken(User user) {
         try {

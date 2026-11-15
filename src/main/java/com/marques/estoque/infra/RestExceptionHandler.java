@@ -4,6 +4,7 @@ import com.marques.estoque.exception.ArgumentException;
 import com.marques.estoque.exception.DuplicateDataException;
 import com.marques.estoque.exception.GeneralException;
 import com.marques.estoque.exception.NotFoundException;
+import com.marques.estoque.exception.TooManyRequestsException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -74,6 +75,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         String message = exception.getMessage();
         HttpStatus status = HttpStatus.CONFLICT;
         StandardError err = new StandardError(status, message, Instant.now());
+        return ResponseEntity.status(status).body(err);
+    }
+
+    @ExceptionHandler(TooManyRequestsException.class)
+    private ResponseEntity<StandardError> tooManyRequestsHandler(TooManyRequestsException exception) {
+        HttpStatus status = HttpStatus.TOO_MANY_REQUESTS;
+        StandardError err = new StandardError(status, exception.getMessage(), Instant.now());
         return ResponseEntity.status(status).body(err);
     }
 }

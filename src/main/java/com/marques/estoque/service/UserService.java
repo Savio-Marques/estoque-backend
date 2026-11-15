@@ -64,6 +64,9 @@ public class UserService {
         user.setUsername(userCreateDTO.getUsername().trim());
 
         if (userCreateDTO.getPassword() != null && !userCreateDTO.getPassword().trim().isEmpty()) {
+            if (userCreateDTO.getPassword().trim().length() < 6) {
+                throw new ArgumentException("A nova senha deve ter pelo menos 6 caracteres.");
+            }
             String encryptedPassword = passwordEncoder.encode(userCreateDTO.getPassword());
             user.setPassword(encryptedPassword);
         }

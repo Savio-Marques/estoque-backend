@@ -3,6 +3,7 @@ package com.marques.estoque.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,6 +19,7 @@ public class ProductDTO {
     private Long id;
 
     @NotBlank(message = "O nome do produto não pode ser vazio.")
+    @Size(max = 255, message = "O nome do produto deve ter no máximo 255 caracteres.")
     private String name;
 
     @NotNull(message = "A quantidade não pode ser nula.")

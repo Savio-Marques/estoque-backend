@@ -11,17 +11,20 @@ import com.marques.estoque.model.user.User;
 import com.marques.estoque.model.user.UserRole;
 import com.marques.estoque.repository.UserRepository;
 import com.marques.estoque.security.AuthenticatedUserProvider;
+import com.marques.estoque.security.LoginAttemptService;
 import com.marques.estoque.security.TokenService;
 import com.marques.estoque.util.UserMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,21 +40,37 @@ public class AuthenticationController {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final UserMapper userMapper;
+    private final LoginAttemptService loginAttemptService;
 
     @Operation(summary = "Realiza o login de um usuário")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Usuário logado com sucesso"),
-            @ApiResponse(responseCode = "401", description = "Usuário ou senha inválidos")
+            @ApiResponse(responseCode = "401", description = "Usuário ou senha inválidos"),
+            @ApiResponse(responseCode = "429", description = "Muitas tentativas inválidas")
     })
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid LoginRequestDTO loginRequestDTO) {
-        var userNamePassword = new UsernamePasswordAuthenticationToken(loginRequestDTO.getUsername(), loginRequestDTO.getPassword());
-        var auth = this.authenticationManager.authenticate(userNamePassword);
+    public ResponseEntity<LoginResponseDTO> login(
+            @RequestBody @Valid LoginRequestDTO loginRequestDTO,
+            HttpServletRequest request) {
+        String attemptKey = request.getRemoteAddr() + ":" + loginRequestDTO.getUsername().trim().toLowerCase();
+        loginAttemptService.checkBlocked(attemptKey);
 
-        User user = (User) auth.getPrincipal();
-        var token = tokenService.generateToken(user);
+        try {
+            var userNamePassword = new UsernamePasswordAuthenticationToken(
+                    loginRequestDTO.getUsername().trim(),
+                    loginRequestDTO.getPassword()
+            );
+            var auth = this.authenticationManager.authenticate(userNamePassword);
+            loginAttemptService.recordSuccess(attemptKey);
 
-        return ResponseEntity.ok(new LoginResponseDTO(token, user.getName(), user.getUsername(), user.getRole().name()));
+            User user = (User) auth.getPrincipal();
+            var token = tokenService.generateToken(user);
+
+            return ResponseEntity.ok(new LoginResponseDTO(token, user.getName(), user.getUsername(), user.getRole().name()));
+        } catch (AuthenticationException ex) {
+            loginAttemptService.recordFailure(attemptKey);
+            throw ex;
+        }
     }
 
     @Operation(summary = "Realiza o cadastro de um usuário (somente ADMIN)")
@@ -63,10 +82,10 @@ public class AuthenticationController {
     })
     @PostMapping("/register")
     public ResponseEntity<UserResponseDTO> register(@RequestBody @Valid UserCreateDTO userCreateDTO) {
-        if (userCreateDTO.getPassword() == null || userCreateDTO.getPassword().trim().isEmpty()) {
-            throw new ArgumentException("A senha do usuário não pode ser vazia.");
+        if (userCreateDTO.getPassword() == null || userCreateDTO.getPassword().trim().length() < 6) {
+            throw new ArgumentException("A senha do usuário deve ter pelo menos 6 caracteres.");
         }
-        if (this.userRepository.findByUsername(userCreateDTO.getUsername()) != null) {
+        if (this.userRepository.findByUsername(userCreateDTO.getUsername().trim()) != null) {
             throw new DuplicateDataException("Nome de usuário já cadastrado.");
         }
 
@@ -95,6 +114,9 @@ public class AuthenticationController {
         currentUser.setName(profileDTO.getName().trim());
 
         if (profileDTO.getNewPassword() != null && !profileDTO.getNewPassword().trim().isEmpty()) {
+            if (profileDTO.getNewPassword().trim().length() < 6) {
+                throw new ArgumentException("A nova senha deve ter pelo menos 6 caracteres.");
+            }
             if (profileDTO.getCurrentPassword() == null
                     || !passwordEncoder.matches(profileDTO.getCurrentPassword(), currentUser.getPassword())) {
                 throw new ArgumentException("A senha atual está incorreta.");

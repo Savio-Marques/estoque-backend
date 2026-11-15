@@ -12,6 +12,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -196,5 +197,33 @@ class AuthenticationControllerTest extends BaseControllerTest {
                 .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("A senha atual está incorreta."));
+    }
+
+    @Test
+    void login_ShouldReturn429TooManyRequests_AfterFiveFailedAttempts() throws Exception {
+        createUser("Alvo Brute Force", "usuario_bruteforce", "SenhaSecreta123", UserRole.USER);
+
+        LoginRequestDTO wrongLogin = new LoginRequestDTO();
+        wrongLogin.setUsername("usuario_bruteforce");
+        wrongLogin.setPassword("errada123");
+
+        for (int i = 0; i < 5; i++) {
+            mockMvc.perform(post("/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(wrongLogin)))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(header().string("X-Frame-Options", "DENY"))
+                    .andExpect(header().string("X-Content-Type-Options", "nosniff"));
+        }
+
+        LoginRequestDTO evenRightPassword = new LoginRequestDTO();
+        evenRightPassword.setUsername("usuario_bruteforce");
+        evenRightPassword.setPassword("SenhaSecreta123");
+
+        mockMvc.perform(post("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(evenRightPassword)))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.message").exists());
     }
 }
