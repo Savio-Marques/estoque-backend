@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,12 +39,18 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT COUNT(p) FROM Product p WHERE p.user = :user AND p.qtd = 0")
     Integer countOutOfStockProductsByUser(@Param("user") User user);
 
-    @Query("SELECT COUNT(p) FROM Product p WHERE p.user = :user AND p.qtd > 0 AND p.qtd <= :threshold")
-    Integer countLowStockProductsByUser(@Param("user") User user, @Param("threshold") int threshold);
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.user = :user AND p.qtd > 0 AND p.qtd <= p.minQuantity")
+    Integer countLowStockProductsByUser(@Param("user") User user);
+
+    @Query("SELECT COALESCE(SUM(p.qtd * p.costPrice), 0) FROM Product p WHERE p.user = :user")
+    BigDecimal sumTotalStockCostValueByUser(@Param("user") User user);
+
+    @Query("SELECT COALESCE(SUM(p.qtd * p.salePrice), 0) FROM Product p WHERE p.user = :user")
+    BigDecimal sumTotalStockSaleValueByUser(@Param("user") User user);
 
     @Query("SELECT p FROM Product p JOIN FETCH p.categories WHERE p.user = :user AND p.qtd = 0 ORDER BY p.id ASC")
     List<Product> findOutOfStockProductsOrderByIdAsc(@Param("user") User user);
 
-    @Query("SELECT p FROM Product p JOIN FETCH p.categories WHERE p.user = :user AND p.qtd > 0 AND p.qtd <= :threshold ORDER BY p.id ASC")
-    List<Product> findLowStockProductsOrderByIdAsc(@Param("user") User user, @Param("threshold") int threshold);
+    @Query("SELECT p FROM Product p JOIN FETCH p.categories WHERE p.user = :user AND p.qtd > 0 AND p.qtd <= p.minQuantity ORDER BY p.id ASC")
+    List<Product> findLowStockProductsOrderByIdAsc(@Param("user") User user);
 }

@@ -13,6 +13,7 @@ import com.marques.estoque.util.DebtorMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -76,6 +77,30 @@ public class DebtorService {
 
         debtorRepository.deleteById(id);
         return "Devedor com id " + id + " deletado com sucesso";
+    }
+
+    @Transactional
+    public DebtorDTO registerPartialPayment(Long id, BigDecimal amount) {
+        log.info("Registrando pagamento parcial para o devedor id: {}", id);
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ArgumentException("O valor do pagamento deve ser maior que zero.");
+        }
+
+        User currentUser = authenticatedUserProvider.getCurrentUser();
+        Debtor debtor = returnDebtorWithId(id, currentUser);
+
+        if (amount.compareTo(debtor.getValue()) > 0) {
+            throw new ArgumentException("O valor abatido não pode ser maior que a dívida atual.");
+        }
+
+        BigDecimal remaining = debtor.getValue().subtract(amount);
+        if (remaining.compareTo(BigDecimal.ZERO) == 0) {
+            debtorRepository.delete(debtor);
+            return null;
+        }
+
+        debtor.setValue(remaining);
+        return debtorMapper.toDTO(debtorRepository.save(debtor));
     }
 
     public SummaryDebtorsDTO summaryDebtors() {

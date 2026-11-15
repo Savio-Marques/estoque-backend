@@ -29,9 +29,11 @@ public interface ProductMapper {
             return;
         }
 
+        int threshold = product.getMinQuantity() != null ? product.getMinQuantity() : 5;
+
         if (product.getQtd() == 0) {
             dto.setStatus("Sem Estoque");
-        } else if (product.getQtd() <= 5) {
+        } else if (product.getQtd() <= threshold) {
             dto.setStatus("Estoque Baixo");
         } else {
             dto.setStatus("Disponível");

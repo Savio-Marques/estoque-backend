@@ -2,6 +2,7 @@ package com.marques.estoque.controller;
 
 
 import com.marques.estoque.dto.ProductDTO;
+import com.marques.estoque.dto.StockMovementDTO;
 import com.marques.estoque.dto.SummaryProductDTO;
 import com.marques.estoque.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -132,6 +133,12 @@ public class ProductController {
     public ResponseEntity<List<ProductDTO>> noStockProductsFilter() {
         List<ProductDTO> products = productService.noStockProductFilter();
         return ResponseEntity.ok(products);
+    }
+
+    @Operation(summary = "Lista as últimas movimentações de estoque do usuário logado")
+    @GetMapping("/movements")
+    public ResponseEntity<List<StockMovementDTO>> getMovements() {
+        return ResponseEntity.ok(productService.findRecentMovements());
     }
 
 }

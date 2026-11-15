@@ -35,6 +35,7 @@ public class SecurityConfigurations {
                                 response.setStatus(HttpStatus.FORBIDDEN.value()))
                 )
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/auth/me").authenticated()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/users/**").hasRole("ADMIN")
                         .requestMatchers("/product/**").hasRole("USER")

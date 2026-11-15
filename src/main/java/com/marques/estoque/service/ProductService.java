@@ -1,19 +1,27 @@
 package com.marques.estoque.service;
 
 import com.marques.estoque.dto.ProductDTO;
+import com.marques.estoque.dto.StockMovementDTO;
 import com.marques.estoque.dto.SummaryProductDTO;
 import com.marques.estoque.exception.ArgumentException;
 import com.marques.estoque.exception.DuplicateDataException;
 import com.marques.estoque.exception.NotFoundException;
 import com.marques.estoque.model.product.Product;
+import com.marques.estoque.model.product.StockMovement;
+import com.marques.estoque.model.product.StockMovementType;
 import com.marques.estoque.model.user.User;
 import com.marques.estoque.repository.ProductRepository;
+import com.marques.estoque.repository.StockMovementRepository;
 import com.marques.estoque.security.AuthenticatedUserProvider;
 import com.marques.estoque.util.ProductMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
@@ -21,9 +29,10 @@ import java.util.List;
 @Slf4j
 public class ProductService {
 
-    private static final int LOW_STOCK_THRESHOLD = 5;
+    private static final int DEFAULT_LOW_STOCK_THRESHOLD = 5;
 
     private final ProductRepository productRepository;
+    private final StockMovementRepository stockMovementRepository;
     private final CategoryService categoryService;
     private final ProductMapper productMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
@@ -40,6 +49,7 @@ public class ProductService {
         );
     }
 
+    @Transactional
     public ProductDTO save(ProductDTO productDTO) {
         log.info("Salvando produto no banco de dados para o usuário logado");
         User currentUser = authenticatedUserProvider.getCurrentUser();
@@ -51,12 +61,17 @@ public class ProductService {
         }
 
         Product product = productMapper.toEntity(productDTO);
+        applyDefaults(product, productDTO);
         product.setCategories(categoryService.returnCategory(productDTO.getCategoryId(), currentUser));
         product.setUser(currentUser);
 
-        return productMapper.toDTO(productRepository.save(product));
+        Product saved = productRepository.save(product);
+        recordMovement(currentUser, saved.getName(), StockMovementType.CADASTRO, 0, saved.getQtd());
+
+        return productMapper.toDTO(saved);
     }
 
+    @Transactional
     public ProductDTO update(Long id, ProductDTO productDTO) {
         log.info("Atualizando id: {} no banco de dados", id);
         User currentUser = authenticatedUserProvider.getCurrentUser();
@@ -68,19 +83,28 @@ public class ProductService {
             throw new DuplicateDataException("Já existe um produto cadastrado com esse nome.");
         }
 
-        updateProductDTO(product, productDTO, currentUser);
+        int previousQtd = product.getQtd();
+        updateProductEntity(product, productDTO, currentUser);
 
-        return productMapper.toDTO(productRepository.save(product));
-    }
-
-    public String delete(Long id) {
-        log.info("Deletando id: {} do banco de dados", id);
-        if (!productRepository.existsByIdAndUser(id, authenticatedUserProvider.getCurrentUser())) {
-            log.error("Produto não encontrado com o id: {}", id);
-            throw new NotFoundException("Produto com o id " + id + " não encontrado");
+        Product saved = productRepository.save(product);
+        if (previousQtd != saved.getQtd()) {
+            StockMovementType type = saved.getQtd() > previousQtd
+                    ? StockMovementType.ENTRADA
+                    : StockMovementType.SAIDA;
+            recordMovement(currentUser, saved.getName(), type, previousQtd, saved.getQtd());
         }
 
-        productRepository.deleteById(id);
+        return productMapper.toDTO(saved);
+    }
+
+    @Transactional
+    public String delete(Long id) {
+        log.info("Deletando id: {} do banco de dados", id);
+        User currentUser = authenticatedUserProvider.getCurrentUser();
+        Product product = returnProductWithId(id, currentUser);
+
+        recordMovement(currentUser, product.getName(), StockMovementType.EXCLUSAO, product.getQtd(), 0);
+        productRepository.delete(product);
         return "Produto com id " + id + " deletado com sucesso";
     }
 
@@ -89,10 +113,18 @@ public class ProductService {
         User currentUser = authenticatedUserProvider.getCurrentUser();
 
         Integer total = productRepository.countTotalProductsByUser(currentUser);
-        Integer lowStock = productRepository.countLowStockProductsByUser(currentUser, LOW_STOCK_THRESHOLD);
+        Integer lowStock = productRepository.countLowStockProductsByUser(currentUser);
         Integer noStock = productRepository.countOutOfStockProductsByUser(currentUser);
+        BigDecimal totalCost = productRepository.sumTotalStockCostValueByUser(currentUser);
+        BigDecimal totalSale = productRepository.sumTotalStockSaleValueByUser(currentUser);
 
-        return new SummaryProductDTO(total, lowStock, noStock);
+        return new SummaryProductDTO(
+                total,
+                lowStock,
+                noStock,
+                totalCost != null ? totalCost : BigDecimal.ZERO,
+                totalSale != null ? totalSale : BigDecimal.ZERO
+        );
     }
 
     public List<ProductDTO> findAll() {
@@ -102,7 +134,7 @@ public class ProductService {
 
     public List<ProductDTO> lowStockProductFilter() {
         List<Product> lowStockProducts = productRepository.findLowStockProductsOrderByIdAsc(
-                authenticatedUserProvider.getCurrentUser(), LOW_STOCK_THRESHOLD
+                authenticatedUserProvider.getCurrentUser()
         );
         return productMapper.toDTOList(lowStockProducts);
     }
@@ -114,15 +146,49 @@ public class ProductService {
         return productMapper.toDTOList(noStockProducts);
     }
 
+    public List<StockMovementDTO> findRecentMovements() {
+        User currentUser = authenticatedUserProvider.getCurrentUser();
+        return stockMovementRepository.findTop50ByUserOrderByCreatedAtDesc(currentUser).stream()
+                .map(m -> new StockMovementDTO(
+                        m.getId(),
+                        m.getProductName(),
+                        m.getMovementType().name(),
+                        m.getPreviousQuantity(),
+                        m.getNewQuantity(),
+                        m.getQuantityDelta(),
+                        m.getCreatedAt()
+                ))
+                .toList();
+    }
+
     private Product returnProductWithId(Long id, User user) {
         return productRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new NotFoundException("Produto com o id: " + id + " não encontrado"));
     }
 
-    private void updateProductDTO(Product product, ProductDTO productDTO, User currentUser) {
+    private void updateProductEntity(Product product, ProductDTO productDTO, User currentUser) {
         product.setName(productDTO.getName());
         product.setQtd(productDTO.getQtd());
+        applyDefaults(product, productDTO);
         product.setCategories(categoryService.returnCategory(productDTO.getCategoryId(), currentUser));
+    }
+
+    private void applyDefaults(Product product, ProductDTO dto) {
+        product.setCostPrice(dto.getCostPrice() != null ? dto.getCostPrice() : BigDecimal.ZERO);
+        product.setSalePrice(dto.getSalePrice() != null ? dto.getSalePrice() : BigDecimal.ZERO);
+        product.setMinQuantity(dto.getMinQuantity() != null ? dto.getMinQuantity() : DEFAULT_LOW_STOCK_THRESHOLD);
+    }
+
+    private void recordMovement(User user, String productName, StockMovementType type, int previousQtd, int newQtd) {
+        StockMovement movement = new StockMovement();
+        movement.setUser(user);
+        movement.setProductName(productName);
+        movement.setMovementType(type);
+        movement.setPreviousQuantity(previousQtd);
+        movement.setNewQuantity(newQtd);
+        movement.setQuantityDelta(newQtd - previousQtd);
+        movement.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
+        stockMovementRepository.save(movement);
     }
 
     private void validateProduct(String name, Integer qtd) {

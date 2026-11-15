@@ -3,6 +3,7 @@ package com.marques.estoque.controller;
 
 import com.marques.estoque.dto.DebtorDTO;
 import com.marques.estoque.dto.DebtorsPageDTO;
+import com.marques.estoque.dto.PartialPaymentDTO;
 import com.marques.estoque.dto.SummaryDebtorsDTO;
 import com.marques.estoque.service.DebtorService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -99,6 +100,18 @@ public class DebtorController {
     @DeleteMapping("/{id}")
     public ResponseEntity<String> delete(@Parameter(description = "ID do devedor a ser buscado") @PathVariable(name = "id") Long id) {
         return ResponseEntity.ok().body(debtorService.delete(id));
+    }
+
+    @Operation(summary = "Registra pagamento parcial ou quitação de um devedor")
+    @PatchMapping("/{id}/pay")
+    public ResponseEntity<DebtorDTO> registerPartialPayment(
+            @PathVariable(name = "id") Long id,
+            @Valid @RequestBody PartialPaymentDTO paymentDTO) {
+        DebtorDTO updated = debtorService.registerPartialPayment(id, paymentDTO.getAmount());
+        if (updated == null) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(updated);
     }
 
     @Operation(summary = "Sumário de devedores")

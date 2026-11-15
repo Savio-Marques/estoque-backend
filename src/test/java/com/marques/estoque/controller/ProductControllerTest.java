@@ -21,6 +21,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -199,5 +201,36 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.totalProduct").value(3))
                 .andExpect(jsonPath("$.lowStock").value(1))
                 .andExpect(jsonPath("$.noStock").value(1));
+    }
+
+    @Test
+    void saveProductWithPricesAndMinQuantity_ShouldCalculateSummaryAndRecordMovements() throws Exception {
+        User user = authenticateUser();
+        Category cat = createCategory(user, "Mercearia");
+
+        ProductDTO dto = new ProductDTO();
+        dto.setName("Arroz 5kg");
+        dto.setQtd(8);
+        dto.setCostPrice(new BigDecimal("15.00"));
+        dto.setSalePrice(new BigDecimal("25.00"));
+        dto.setMinQuantity(10);
+        dto.setCategoryId(cat.getId());
+
+        mockMvc.perform(post("/product")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("Estoque Baixo"));
+
+        mockMvc.perform(get("/product/summary"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.lowStock").value(1))
+                .andExpect(jsonPath("$.totalStockValue").value(120.0))
+                .andExpect(jsonPath("$.totalSaleValue").value(200.0));
+
+        mockMvc.perform(get("/product/movements"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].productName").value("Arroz 5kg"))
+                .andExpect(jsonPath("$[0].movementType").value("CADASTRO"));
     }
 }
