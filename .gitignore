@@ -81,6 +81,8 @@ $RECYCLE.BIN/
 *.log
 logs/
 *.sql
-*.sqlite
+!src/main/resources/db/migration/*.sql
+*.sql
+!src/main/resources/db/migration/*.sqlite
 docker-data/
 /scratch/
