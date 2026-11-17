@@ -1,64 +1,141 @@
+# ==============================================================================
+# Build & Maven / Spring Boot
+# ==============================================================================
 target/
+build/
+out/
+bin/
 *.class
 *.jar
 *.war
 *.ear
 *.nar
-*.rar
-*.zip
-*.tar.gz
+!/.mvn/wrapper/maven-wrapper.jar
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar.tmp
+.flattened-pom.xml
+dependency-reduced-pom.xml
+buildNumber.properties
+HELP.md
 
-# Crash logs & JVM dumps
+# ==============================================================================
+# Testes, Cobertura & Crash Dumps (JVM / Surefire / JaCoCo)
+# ==============================================================================
 hs_err_pid*
 replay_pid*
+*.dump
+*.dumpstream
+*.hprof
+jacoco.exec
+coverage/
 
-# Maven Wrapper
-.mvn/timing.properties
-
+# ==============================================================================
+# Variáveis de Ambiente, Segredos & Certificados (IMPORTANTE)
+# ==============================================================================
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 *.pem
 *.key
 *.crt
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.truststore
+application-local.yml
+application-local.properties
+application-secret*.yml
+application-secret*.properties
 
+# ==============================================================================
+# Banco de Dados, Dumps & Volumes Locais (Docker)
+# ==============================================================================
+*.sql
+!src/main/resources/db/migration/**/*.sql
+*.sqlite
+*.sqlite3
+*.db
+*.mv.db
+*.trace.db
+*.dump.sql
+docker-data/
+postgres-data/
+pgdata/
+grafana/
+prometheus.yml/
+docker-compose.override.yml
+
+# ==============================================================================
+# Logs
+# ==============================================================================
+logs/
+*.log
+*.log.*
+
+# ==============================================================================
+# IDEs & Editores (IntelliJ, VS Code, Eclipse, NetBeans)
+# ==============================================================================
 .idea/
 *.iml
 *.iws
 *.ipr
-out/
 
-.metadata
-bin/
-tmp/
-*.tmp
-*.bak
-*.swp
-*.launch
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+.history/
+
+.metadata/
 .settings/
 .classpath
 .project
 .factorypath
 .springBeans
 .sts4-cache/
+*.launch
 
-# Visual Studio Code
-.vscode/
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-*.code-workspace
-
-# NetBeans
 nbproject/private/
-build/
 nbbuild/
 dist/
 nbdist/
 
+# ==============================================================================
+# Ferramentas de IA & Agentes
+# ==============================================================================
+.agents/
+.agent/
+.claude/
+.cursor/
+.windsurf/
+.gemini/
+skills-lock.json
+CLAUDE.md
 
-# Windows
+# ==============================================================================
+# Arquivos Temporários, Backups & Compactados
+# ==============================================================================
+tmp/
+temp/
+scratch/
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*.orig
+*~
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# ==============================================================================
+# Sistema Operacional (Windows, macOS, Linux)
+# ==============================================================================
 Thumbs.db
 Thumbs.db:encryptable
 ehthumbs.db
@@ -68,20 +145,15 @@ $RECYCLE.BIN/
 *.stackdump
 *.lnk
 
-# macOS
 .DS_Store
+.DS_Store?
 .AppleDouble
 .LSOverride
 ._*
+.Spotlight-V100
+.Trashes
 
-# Linux
-*~
 .directory
-
-*.log
-logs/
-*.sql
-!src/main/resources/db/migration/*.sql
-*.sqlite
-docker-data/
-/scratch/
+.Trash-*
+.nfs*
+.fuse_hidden*
