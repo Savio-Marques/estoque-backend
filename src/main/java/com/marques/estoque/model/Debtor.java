@@ -43,4 +43,10 @@ public class Debtor {
 
     @Column(name = "date")
     private LocalDateTime date;
+
+    @Column(name = "paid", nullable = false)
+    private Boolean paid = false;
+
+    @Column(name = "settled_at")
+    private LocalDateTime settledAt;
 }

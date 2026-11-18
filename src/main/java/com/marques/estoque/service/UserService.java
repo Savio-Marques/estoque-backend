@@ -9,6 +9,7 @@ import com.marques.estoque.model.user.User;
 import com.marques.estoque.model.user.UserRole;
 import com.marques.estoque.repository.CategoryRepository;
 import com.marques.estoque.repository.DebtorRepository;
+import com.marques.estoque.repository.DebtorTransactionRepository;
 import com.marques.estoque.repository.ProductRepository;
 import com.marques.estoque.repository.StockMovementRepository;
 import com.marques.estoque.repository.UserRepository;
@@ -31,6 +32,7 @@ public class UserService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final DebtorRepository debtorRepository;
+    private final DebtorTransactionRepository debtorTransactionRepository;
     private final StockMovementRepository stockMovementRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
@@ -94,6 +96,7 @@ public class UserService {
 
         productRepository.deleteAllByUser(user);
         categoryRepository.deleteAllByUser(user);
+        debtorTransactionRepository.deleteAllByUser(user);
         debtorRepository.deleteAllByUser(user);
         stockMovementRepository.deleteAllByUser(user);
         userRepository.delete(user);

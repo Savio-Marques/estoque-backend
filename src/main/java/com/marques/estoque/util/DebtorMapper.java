@@ -11,8 +11,11 @@ import java.util.List;
 public interface DebtorMapper {
 
     @Mapping(target = "user", ignore = true)
+    @Mapping(target = "paid", ignore = true)
+    @Mapping(target = "settledAt", ignore = true)
     Debtor toDebtor(DebtorDTO debtorDTO);
 
+    @Mapping(target = "transactionNote", ignore = true)
     DebtorDTO toDTO(Debtor debtor);
 
     List<DebtorDTO> toDTOList(List<Debtor> debtor);

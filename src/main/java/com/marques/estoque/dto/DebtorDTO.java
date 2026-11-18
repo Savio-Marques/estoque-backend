@@ -28,4 +28,11 @@ public class DebtorDTO {
 
     private LocalDateTime date;
 
+    private Boolean paid;
+
+    private LocalDateTime settledAt;
+
+    @Size(max = 255, message = "A nota de transação deve ter no máximo 255 caracteres.")
+    private String transactionNote;
+
 }

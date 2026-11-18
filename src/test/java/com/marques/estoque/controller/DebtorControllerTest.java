@@ -141,4 +141,84 @@ class DebtorControllerTest extends BaseControllerTest {
                 .andExpect(jsonPath("$.totalDebtors").value(2))
                 .andExpect(jsonPath("$.totalValue").value(100.0));
     }
+
+    @Test
+    void settleAndTransactions_ShouldKeepHistory_MoveToPaid_AndReopenSameAccount() throws Exception {
+        User user = createUser("User Extrato", "debtor_history_user", "password123", UserRole.USER);
+        String token = bearerTokenFor(user);
+
+        DebtorDTO createDto = new DebtorDTO();
+        createDto.setName("Fernanda Lima");
+        createDto.setDescription("1 Arroz 5kg, 2 Feijão");
+        createDto.setValue(new BigDecimal("120.00"));
+
+        String createdJson = mockMvc.perform(post("/debtor")
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.paid").value(false))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Long debtorId = objectMapper.readTree(createdJson).get("id").asLong();
+
+        PartialPaymentDTO partial = new PartialPaymentDTO();
+        partial.setAmount(new BigDecimal("50.00"));
+
+        mockMvc.perform(patch("/debtor/{id}/pay", debtorId)
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(partial)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.value").value(70.0));
+
+        mockMvc.perform(patch("/debtor/{id}/settle", debtorId)
+                .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paid").value(true))
+                .andExpect(jsonPath("$.value").value(0.0));
+
+        mockMvc.perform(get("/debtor/pesquisar")
+                .param("paid", "false")
+                .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.debtorDTOList.length()").value(0));
+
+        mockMvc.perform(get("/debtor/pesquisar")
+                .param("paid", "true")
+                .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.debtorDTOList.length()").value(1))
+                .andExpect(jsonPath("$.debtorDTOList[0].name").value("Fernanda Lima"));
+
+        mockMvc.perform(get("/debtor/{id}/transactions", debtorId)
+                .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(3))
+                .andExpect(jsonPath("$[0].transactionType").value("QUITACAO"))
+                .andExpect(jsonPath("$[1].transactionType").value("ABATIMENTO"))
+                .andExpect(jsonPath("$[2].transactionType").value("LANCAMENTO"));
+
+        DebtorDTO reopenDto = new DebtorDTO();
+        reopenDto.setName("fernanda lima");
+        reopenDto.setDescription("1 Café 500g");
+        reopenDto.setValue(new BigDecimal("25.00"));
+
+        mockMvc.perform(post("/debtor")
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(reopenDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(debtorId))
+                .andExpect(jsonPath("$.paid").value(false))
+                .andExpect(jsonPath("$.value").value(25.0));
+
+        mockMvc.perform(get("/debtor/{id}/transactions", debtorId)
+                .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(4))
+                .andExpect(jsonPath("$[0].transactionType").value("LANCAMENTO"));
+    }
 }

@@ -2,6 +2,7 @@ package com.marques.estoque.controller;
 
 
 import com.marques.estoque.dto.DebtorDTO;
+import com.marques.estoque.dto.DebtorTransactionDTO;
 import com.marques.estoque.dto.DebtorsPageDTO;
 import com.marques.estoque.dto.PartialPaymentDTO;
 import com.marques.estoque.dto.SummaryDebtorsDTO;
@@ -50,16 +51,31 @@ public class DebtorController {
         return ResponseEntity.ok().body(debtorService.findAll());
     }
 
-    @Operation(summary = "Lista todos os devedores do usuário logado")
+    @Operation(summary = "Lista os devedores do usuário logado filtrando por nome e status de quitação")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista de devedores retornada com sucesso"),
             @ApiResponse(responseCode = "404", description = "Nenhum devedor encontrado"),
             @ApiResponse(responseCode = "403", description = "Acesso negado")
     })
     @GetMapping("/pesquisar")
-    public ResponseEntity<DebtorsPageDTO> findDebtors(@RequestParam(required = false) String name) {
-        DebtorsPageDTO pageData = debtorService.findDebtorsWithFilters(name);
+    public ResponseEntity<DebtorsPageDTO> findDebtors(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false, defaultValue = "false") boolean paid
+    ) {
+        DebtorsPageDTO pageData = debtorService.findDebtorsWithFilters(name, paid);
         return ResponseEntity.ok(pageData);
+    }
+
+    @Operation(summary = "Lista as últimas movimentações da caderneta do usuário logado")
+    @GetMapping("/transactions")
+    public ResponseEntity<List<DebtorTransactionDTO>> findRecentTransactions() {
+        return ResponseEntity.ok(debtorService.findRecentTransactions());
+    }
+
+    @Operation(summary = "Lista o extrato completo de transações de um devedor específico")
+    @GetMapping("/{id}/transactions")
+    public ResponseEntity<List<DebtorTransactionDTO>> findDebtorTransactions(@PathVariable(name = "id") Long id) {
+        return ResponseEntity.ok(debtorService.findTransactionsByDebtor(id));
     }
 
     @Operation(summary = "Cadastro de devedor do usuário logado")
@@ -112,6 +128,12 @@ public class DebtorController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(updated);
+    }
+
+    @Operation(summary = "Quita integralmente a dívida de um devedor preservando o histórico")
+    @PatchMapping("/{id}/settle")
+    public ResponseEntity<DebtorDTO> settleDebtor(@PathVariable(name = "id") Long id) {
+        return ResponseEntity.ok(debtorService.settle(id));
     }
 
     @Operation(summary = "Sumário de devedores")
