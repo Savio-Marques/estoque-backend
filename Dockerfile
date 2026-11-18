@@ -1,4 +1,4 @@
-FROM maven:3.9-eclipse-temurin-21 AS build
+FROM --platform=$BUILDPLATFORM maven:3.9-eclipse-temurin-21 AS build
 
 WORKDIR /app
 
@@ -15,8 +15,7 @@ WORKDIR /app
 
 RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 
-COPY --from=build /app/target/*.jar app.jar
-RUN chown appuser:appgroup app.jar
+COPY --from=build --chown=appuser:appgroup /app/target/*.jar app.jar
 
 USER appuser:appgroup
 
