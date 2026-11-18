@@ -16,6 +16,8 @@ public interface DebtorMapper {
     Debtor toDebtor(DebtorDTO debtorDTO);
 
     @Mapping(target = "transactionNote", ignore = true)
+    @Mapping(target = "stockItems", ignore = true)
+    @Mapping(target = "deductFromStock", ignore = true)
     DebtorDTO toDTO(Debtor debtor);
 
     List<DebtorDTO> toDTOList(List<Debtor> debtor);

@@ -1,21 +1,29 @@
 package com.marques.estoque.controller;
 
 import com.marques.estoque.dto.DebtorDTO;
+import com.marques.estoque.dto.DebtorStockItemDTO;
 import com.marques.estoque.dto.PartialPaymentDTO;
 import com.marques.estoque.model.Debtor;
+import com.marques.estoque.model.product.Category;
+import com.marques.estoque.model.product.Product;
 import com.marques.estoque.model.user.User;
 import com.marques.estoque.model.user.UserRole;
+import com.marques.estoque.repository.CategoryRepository;
 import com.marques.estoque.repository.DebtorRepository;
+import com.marques.estoque.repository.ProductRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -23,6 +31,12 @@ class DebtorControllerTest extends BaseControllerTest {
 
     @Autowired
     private DebtorRepository debtorRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    @Autowired
+    private ProductRepository productRepository;
 
     @Test
     void getDebtors_ShouldReturn401Unauthorized_WhenNoToken() throws Exception {
@@ -220,5 +234,89 @@ class DebtorControllerTest extends BaseControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(4))
                 .andExpect(jsonPath("$[0].transactionType").value("LANCAMENTO"));
+    }
+
+    @Test
+    void saveAndUpdateDebtorWithStockItems_ShouldDeductStockAndRecordMovements_AndRejectInsufficientStock() throws Exception {
+        User user = createUser("Lojista Caderneta", "debtor_stock_user", "password123", UserRole.USER);
+        String token = bearerTokenFor(user);
+
+        Category category = new Category();
+        category.setName("Bebidas");
+        category.setUser(user);
+        Category savedCategory = categoryRepository.save(category);
+
+        Product product = new Product();
+        product.setName("Coca-Cola 2L");
+        product.setQtd(10);
+        product.setCostPrice(new BigDecimal("8.00"));
+        product.setSalePrice(new BigDecimal("12.50"));
+        product.setMinQuantity(3);
+        product.setCategories(savedCategory);
+        product.setUser(user);
+        Product savedProduct = productRepository.save(product);
+
+        DebtorDTO createDto = new DebtorDTO();
+        createDto.setName("Lucas Andrade");
+        createDto.setDescription("3x Coca-Cola 2L");
+        createDto.setValue(new BigDecimal("37.50"));
+        createDto.setDeductFromStock(true);
+        createDto.setStockItems(List.of(new DebtorStockItemDTO(savedProduct.getId(), 3)));
+
+        String createdJson = mockMvc.perform(post("/debtor")
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.value").value(37.5))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Long debtorId = objectMapper.readTree(createdJson).get("id").asLong();
+        assertEquals(7, productRepository.findById(savedProduct.getId()).orElseThrow().getQtd());
+
+        mockMvc.perform(get("/product/movements")
+                .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].productName").value("Coca-Cola 2L"))
+                .andExpect(jsonPath("$[0].movementType").value("SAIDA"))
+                .andExpect(jsonPath("$[0].previousQuantity").value(10))
+                .andExpect(jsonPath("$[0].newQuantity").value(7))
+                .andExpect(jsonPath("$[0].quantityDelta").value(-3));
+
+        DebtorDTO updateDto = new DebtorDTO();
+        updateDto.setId(debtorId);
+        updateDto.setName("Lucas Andrade");
+        updateDto.setDescription("3x Coca-Cola 2L • 2x Coca-Cola 2L");
+        updateDto.setValue(new BigDecimal("62.50"));
+        updateDto.setTransactionNote("2x Coca-Cola 2L");
+        updateDto.setDeductFromStock(true);
+        updateDto.setStockItems(List.of(new DebtorStockItemDTO(savedProduct.getId(), 2)));
+
+        mockMvc.perform(put("/debtor/{id}", debtorId)
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.value").value(62.5));
+
+        assertEquals(5, productRepository.findById(savedProduct.getId()).orElseThrow().getQtd());
+
+        DebtorDTO excessiveDto = new DebtorDTO();
+        excessiveDto.setName("Cliente Excesso");
+        excessiveDto.setDescription("8x Coca-Cola 2L");
+        excessiveDto.setValue(new BigDecimal("100.00"));
+        excessiveDto.setDeductFromStock(true);
+        excessiveDto.setStockItems(List.of(new DebtorStockItemDTO(savedProduct.getId(), 8)));
+
+        mockMvc.perform(post("/debtor")
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(excessiveDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists());
+
+        assertEquals(5, productRepository.findById(savedProduct.getId()).orElseThrow().getQtd());
     }
 }

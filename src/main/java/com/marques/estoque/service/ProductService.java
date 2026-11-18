@@ -1,5 +1,6 @@
 package com.marques.estoque.service;
 
+import com.marques.estoque.dto.DebtorStockItemDTO;
 import com.marques.estoque.dto.ProductDTO;
 import com.marques.estoque.dto.StockMovementDTO;
 import com.marques.estoque.dto.SummaryProductDTO;
@@ -22,7 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -106,6 +109,46 @@ public class ProductService {
         recordMovement(currentUser, product.getName(), StockMovementType.EXCLUSAO, product.getQtd(), 0);
         productRepository.delete(product);
         return "Produto com id " + id + " deletado com sucesso";
+    }
+
+    @Transactional
+    public void deductStockForDebtor(User currentUser, List<DebtorStockItemDTO> stockItems) {
+        if (stockItems == null || stockItems.isEmpty()) {
+            return;
+        }
+
+        Map<Long, Integer> consolidatedQuantities = new LinkedHashMap<>();
+        for (DebtorStockItemDTO item : stockItems) {
+            if (item == null || item.getProductId() == null) {
+                throw new ArgumentException("O produto selecionado na baixa de estoque é inválido.");
+            }
+            if (item.getQuantity() == null || item.getQuantity() <= 0) {
+                throw new ArgumentException("A quantidade informada para baixa de estoque deve ser maior que zero.");
+            }
+            consolidatedQuantities.merge(item.getProductId(), item.getQuantity(), Integer::sum);
+        }
+
+        Map<Product, Integer> validatedProducts = new LinkedHashMap<>();
+        for (Map.Entry<Long, Integer> entry : consolidatedQuantities.entrySet()) {
+            Product product = returnProductWithId(entry.getKey(), currentUser);
+            int requestedQty = entry.getValue();
+            if (product.getQtd() < requestedQty) {
+                throw new ArgumentException(
+                        "Estoque insuficiente para o produto \"" + product.getName()
+                                + "\" (disponível: " + product.getQtd() + " un.)."
+                );
+            }
+            validatedProducts.put(product, requestedQty);
+        }
+
+        for (Map.Entry<Product, Integer> entry : validatedProducts.entrySet()) {
+            Product product = entry.getKey();
+            int previousQtd = product.getQtd();
+            int newQtd = previousQtd - entry.getValue();
+            product.setQtd(newQtd);
+            productRepository.save(product);
+            recordMovement(currentUser, product.getName(), StockMovementType.SAIDA, previousQtd, newQtd);
+        }
     }
 
     public SummaryProductDTO summaryProduct() {

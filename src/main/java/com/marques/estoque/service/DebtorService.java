@@ -35,6 +35,7 @@ public class DebtorService {
     private final DebtorTransactionRepository debtorTransactionRepository;
     private final DebtorMapper debtorMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
+    private final ProductService productService;
 
     public DebtorDTO findById(Long id) {
         log.info("Buscando devedor por id para o usuário logado");
@@ -57,6 +58,8 @@ public class DebtorService {
         validateDebtor(debtorDTO.getName(), debtorDTO.getValue());
 
         User currentUser = authenticatedUserProvider.getCurrentUser();
+        applyStockDeductionIfRequested(currentUser, debtorDTO);
+
         String trimmedName = debtorDTO.getName().trim();
         LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
 
@@ -102,6 +105,7 @@ public class DebtorService {
 
         User currentUser = authenticatedUserProvider.getCurrentUser();
         Debtor debtor = returnDebtorWithId(id, currentUser);
+        applyStockDeductionIfRequested(currentUser, debtorDTO);
 
         BigDecimal previousBalance = debtor.getValue() != null ? debtor.getValue() : BigDecimal.ZERO;
         BigDecimal newBalance = debtorDTO.getValue();
@@ -293,6 +297,14 @@ public class DebtorService {
         List<DebtorDTO> debtorDTOs = debtorMapper.toDTOList(filteredDebtors);
 
         return new DebtorsPageDTO(debtorDTOs, summary);
+    }
+
+    private void applyStockDeductionIfRequested(User currentUser, DebtorDTO debtorDTO) {
+        if (!Boolean.FALSE.equals(debtorDTO.getDeductFromStock())
+                && debtorDTO.getStockItems() != null
+                && !debtorDTO.getStockItems().isEmpty()) {
+            productService.deductStockForDebtor(currentUser, debtorDTO.getStockItems());
+        }
     }
 
     private void recordTransaction(
